@@ -1,148 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login / Change Credentials</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Prudex Coffee Dashboard</title>
   <style>
     body {
+      background: url('https://t4.ftcdn.net/jpg/09/59/79/99/360_F_959799956_tRWcyywJUVwzCbSS2LkJ3D6nGWBT3KrY.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #ffffff;
       font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      padding: 40px;
-      max-width: 400px;
-      margin: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      position: relative;
+      overflow: hidden;
     }
 
-    h2, h3 {
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(30, 39, 46, 0.6);
+      z-index: 0;
+    }
+
+    .login-box {
+      position: relative;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
       text-align: center;
+      width: 300px;
+      padding: 30px 40px;
+      z-index: 1;
+      border: 1px solid rgba(255,255,255,0.3);
     }
 
-    input[type="text"], input[type="password"] {
+    input {
       width: 100%;
-      padding: 12px 8px;
-      margin: 8px 0;
-      box-sizing: border-box;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    input::placeholder {
+      color: #ddd;
     }
 
     button {
-      width: 48%;
-      padding: 10px;
-      margin: 10px 1%;
-      background-color: #3498db;
-      border: none;
+      width: 100%;
+      padding: 12px;
+      background-color: #e84118;
       color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
       cursor: pointer;
-      font-weight: bold;
+      font-size: 16px;
     }
 
-    button:hover {
-      background-color: #2980b9;
+    .error {
+      color: #f00;
+      margin-bottom: 10px;
     }
 
-    #message {
-      text-align: center;
-      margin-top: 20px;
-      color: #333;
-      font-weight: bold;
-    }
-
-    #updateSection {
-      background: #e9ecef;
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 20px;
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h2>Login or Change Credentials</h2>
 
-  <form id="mainForm">
-    <input type="text" id="username" placeholder="Username" required>
-    <input type="password" id="password" placeholder="Password" required>
+<div class="login-box">
+  <h2>Prudex</h2>
+  <div id="error" class="error"></div>
 
-    <div id="updateSection" style="display: none;">
-      <h3>New Credentials</h3>
-      <input type="text" id="newUsername" placeholder="New Username" required>
-      <input type="password" id="newPassword" placeholder="New Password" required>
-    </div>
+  <div id="login-form">
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Log In</button>
+  </div>
 
-    <div style="display: flex; justify-content: space-between;">
-      <button type="submit" id="loginBtn">Login</button>
-      <button type="button" id="changeBtn">Change</button>
-    </div>
-  </form>
+  <div id="change-form" class="hidden">
+    <input type="text" id="new-username" placeholder="New Username" />
+    <input type="password" id="new-password" placeholder="New Password" />
+    <button onclick="changeCredentials()">Change Credentials</button>
+  </div>
+</div>
 
-  <p id="message"></p>
+<script>
+  const redirectUrl = "https://coffee1.prudex.net/ui/#!/0?socketid=qGlusxSlu8VwRw7rAAAN";
 
-  <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbw_WIBX3khRDMjdgOCOX3FsQX9qAp9CCeQnaMdt9lZDWGllJFrE5_kjZ-FO1TLmeSaG/exec";
+  // Set default credentials if not already set
+  if (!localStorage.getItem("username")) {
+    localStorage.setItem("username", "admin");
+    localStorage.setItem("password", "2025");
+  }
 
-    let mode = "login";
+  function login() {
+    const u = document.getElementById("username").value.trim();
+    const p = document.getElementById("password").value;
+    const storedUser = localStorage.getItem("username");
+    const storedPass = localStorage.getItem("password");
 
-    document.getElementById("loginBtn").addEventListener("click", function () {
-      mode = "login";
-      document.getElementById("updateSection").style.display = "none";
-    });
+    if (u === storedUser && p === storedPass) {
+      document.getElementById("error").innerText = "";
+      document.getElementById("login-form").classList.add("hidden");
+      document.getElementById("change-form").classList.remove("hidden");
+    } else {
+      document.getElementById("error").innerText = "Invalid username or password";
+    }
+  }
 
-    document.getElementById("changeBtn").addEventListener("click", function () {
-      mode = "update";
-      document.getElementById("updateSection").style.display = "block";
-    });
+  function changeCredentials() {
+    const newUsername = document.getElementById("new-username").value.trim();
+    const newPassword = document.getElementById("new-password").value;
 
-    document.getElementById("mainForm").addEventListener("submit", function (e) {
-      e.preventDefault();
+    if (newUsername && newPassword) {
+      localStorage.setItem("username", newUsername);
+      localStorage.setItem("password", newPassword);
+      alert("Credentials updated! Use the new ones next time.");
+      window.location.href = redirectUrl;
+    } else {
+      alert("Please enter both a new username and password.");
+    }
+  }
+</script>
 
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      if (mode === "login") {
-        fetch(scriptURL, {
-          method: 'POST',
-          body: new URLSearchParams({
-            action: 'login',
-            username: username,
-            password: password
-          })
-        })
-        .then(res => res.text())
-        .then(result => {
-          if (result === "INVALID") {
-            document.getElementById("message").innerText = "❌ Invalid username or password.";
-          } else {
-            document.getElementById("message").innerText = "✅ Login successful. Redirecting...";
-            window.location.href = result;
-          }
-        });
-      } else if (mode === "update") {
-        const newUsername = document.getElementById("newUsername").value;
-        const newPassword = document.getElementById("newPassword").value;
-
-        if (!newUsername || !newPassword) {
-          document.getElementById("message").innerText = "⚠️ Please fill in new credentials.";
-          return;
-        }
-
-        fetch(scriptURL, {
-          method: 'POST',
-          body: new URLSearchParams({
-            action: 'update',
-            username: username,
-            password: password,
-            newUsername: newUsername,
-            newPassword: newPassword
-          })
-        })
-        .then(res => res.text())
-        .then(result => {
-          if (result === "UPDATED") {
-            document.getElementById("message").innerText = "✅ Credentials updated successfully!";
-          } else {
-            document.getElementById("message").innerText = "❌ Update failed. Check your login details.";
-          }
-        });
-      }
-    });
-  </script>
 </body>
 </html>
