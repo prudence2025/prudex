@@ -18,7 +18,6 @@
       position: relative;
       overflow: hidden;
     }
-
     body::before {
       content: "";
       position: absolute;
@@ -26,7 +25,6 @@
       background: rgba(30, 39, 46, 0.6);
       z-index: 0;
     }
-
     .login-box {
       position: relative;
       background: rgba(255, 255, 255, 0.15);
@@ -39,7 +37,6 @@
       z-index: 1;
       border: 1px solid rgba(255,255,255,0.3);
     }
-
     input {
       width: 100%;
       padding: 12px;
@@ -52,10 +49,7 @@
       outline: none;
       box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
     }
-    input::placeholder {
-      color: #ddd;
-    }
-
+    input::placeholder { color: #ddd; }
     button {
       width: 100%;
       padding: 12px;
@@ -67,20 +61,13 @@
       cursor: pointer;
       font-size: 16px;
     }
-
-    .error {
-      color: #f00;
-      margin-bottom: 10px;
-    }
-
-    .hidden {
-      display: none;
-    }
+    .error { color: #f00; margin-bottom: 10px; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
 
-<div class="login-box">
+<div class="login-box" id="login-box">
   <h2>Prudex</h2>
   <div id="error" class="error"></div>
 
@@ -98,13 +85,27 @@
 </div>
 
 <script>
-  const redirectUrl = "https://coffee1.prudex.net/ui/#!/0?socketid=qGlusxSlu8VwRw7rAAAN";
+  const redirectUrl = "https://coffee1.prudex.net/ui/";
 
-  // Set default credentials if not already set
+  // Default credentials (can be changed later)
   if (!localStorage.getItem("username")) {
     localStorage.setItem("username", "admin");
     localStorage.setItem("password", "2025");
   }
+
+  // Auto-redirect if already logged in and session is valid
+  window.onload = () => {
+    const loginTime = sessionStorage.getItem("loginTime");
+    const now = Date.now();
+
+    if (loginTime && now - parseInt(loginTime) < 3600000) {
+      // Still within 1 hour
+      window.location.href = redirectUrl;
+    } else {
+      // Session expired
+      sessionStorage.removeItem("loginTime");
+    }
+  };
 
   function login() {
     const u = document.getElementById("username").value.trim();
@@ -113,9 +114,16 @@
     const storedPass = localStorage.getItem("password");
 
     if (u === storedUser && p === storedPass) {
+      sessionStorage.setItem("loginTime", Date.now().toString());
       document.getElementById("error").innerText = "";
       document.getElementById("login-form").classList.add("hidden");
       document.getElementById("change-form").classList.remove("hidden");
+
+      setTimeout(() => {
+        sessionStorage.removeItem("loginTime");
+        alert("Session expired! Please log in again.");
+        window.location.href = window.location.href;
+      }, 3600000); // Auto logout in 1 hour
     } else {
       document.getElementById("error").innerText = "Invalid username or password";
     }
