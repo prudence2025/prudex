@@ -16,9 +16,7 @@
       height: 100vh;
       margin: 0;
       position: relative;
-      overflow: hidden;
     }
-
     body::before {
       content: "";
       position: absolute;
@@ -26,115 +24,72 @@
       background: rgba(30, 39, 46, 0.6);
       z-index: 0;
     }
-
     .login-box {
       position: relative;
       background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(10px);
       border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
       text-align: center;
       width: 300px;
       padding: 30px 40px;
       z-index: 1;
-      border: 1px solid rgba(255,255,255,0.3);
     }
-
-    input {
+    input, button {
       width: 100%;
       padding: 12px;
       margin: 10px 0;
-      border: none;
       border-radius: 5px;
-      background: rgba(255, 255, 255, 0.25);
-      color: #fff;
       font-size: 16px;
-      outline: none;
-      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
+      border: none;
     }
-    input::placeholder {
-      color: #ddd;
-    }
-
+    input::placeholder { color: #ccc; }
     button {
-      width: 100%;
-      padding: 12px;
       background-color: #e84118;
       color: white;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
       cursor: pointer;
-      font-size: 16px;
     }
-
-    .error {
-      color: #f00;
-      margin-bottom: 10px;
-    }
-
-    .hidden {
-      display: none;
-    }
+    .error { color: red; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-
 <div class="login-box">
   <h2>Prudex</h2>
   <div id="error" class="error"></div>
-
   <div id="login-form">
     <input type="text" id="username" placeholder="Username" />
     <input type="password" id="password" placeholder="Password" />
     <button onclick="login()">Log In</button>
   </div>
-
-  <div id="change-form" class="hidden">
-    <input type="text" id="new-username" placeholder="New Username" />
-    <input type="password" id="new-password" placeholder="New Password" />
-    <button onclick="changeCredentials()">Change Credentials</button>
+  <div id="after-login" class="hidden">
+    <button onclick="window.location.href='https://coffee1.prudex.net/ui/'">Go to Dashboard</button>
+    <button onclick="window.location.href='change.html'">Change Credentials</button>
   </div>
 </div>
 
 <script>
-  const redirectUrl = "https://coffee1.prudex.net/ui/#!/0?socketid=qGlusxSlu8VwRw7rAAAN";
-
-  // Set default credentials if not already set
-  if (!localStorage.getItem("username")) {
-    localStorage.setItem("username", "admin");
-    localStorage.setItem("password", "2025");
-  }
-
   function login() {
-    const u = document.getElementById("username").value.trim();
-    const p = document.getElementById("password").value;
-    const storedUser = localStorage.getItem("username");
-    const storedPass = localStorage.getItem("password");
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
 
-    if (u === storedUser && p === storedPass) {
-      document.getElementById("error").innerText = "";
-      document.getElementById("login-form").classList.add("hidden");
-      document.getElementById("change-form").classList.remove("hidden");
-    } else {
-      document.getElementById("error").innerText = "Invalid username or password";
-    }
-  }
-
-  function changeCredentials() {
-    const newUsername = document.getElementById("new-username").value.trim();
-    const newPassword = document.getElementById("new-password").value;
-
-    if (newUsername && newPassword) {
-      localStorage.setItem("username", newUsername);
-      localStorage.setItem("password", newPassword);
-      alert("Credentials updated! Use the new ones next time.");
-      window.location.href = redirectUrl;
-    } else {
-      alert("Please enter both a new username and password.");
-    }
+    fetch("https://your-backend-url.com/login.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+    })
+    .then(res => res.text())
+    .then(data => {
+      if (data === "success") {
+        document.getElementById("login-form").classList.add("hidden");
+        document.getElementById("after-login").classList.remove("hidden");
+      } else {
+        document.getElementById("error").innerText = "Invalid username or password";
+      }
+    })
+    .catch(() => {
+      document.getElementById("error").innerText = "Connection error";
+    });
   }
 </script>
-
 </body>
 </html>
