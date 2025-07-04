@@ -1,37 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Prudex Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Prudex Coffee Dashboard</title>
+  <style>
+    body {
+      background: url('https://t4.ftcdn.net/jpg/09/59/79/99/360_F_959799956_tRWcyywJUVwzCbSS2LkJ3D6nGWBT3KrY.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(30, 39, 46, 0.6);
+      z-index: 0;
+    }
+
+    .login-box {
+      position: relative;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      text-align: center;
+      width: 300px;
+      padding: 30px 40px;
+      z-index: 1;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    input::placeholder {
+      color: #ddd;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #e84118;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    .error {
+      color: #f00;
+      margin-bottom: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <h2>Login</h2>
-  <form id="loginForm">
-    <input type="text" name="username" placeholder="Username" required><br>
-    <input type="password" name="password" placeholder="Password" required><br>
-    <button type="submit">Login</button>
-  </form>
 
-  <p id="status" style="color: red;"></p>
+<div class="login-box">
+  <h2>Prudex</h2>
+  <div id="error" class="error"></div>
 
-  <script>
-    document.getElementById("loginForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+  <div id="login-form">
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Log In</button>
+  </div>
 
-      const formData = new FormData(e.target);
+  <div id="post-login" class="hidden">
+    <button onclick="goToDashboard()">Go to Dashboard</button>
+    <button onclick="showChangeForm()">Change Credentials</button>
+  </div>
 
-      const response = await fetch("https://prudence58.pythonanywhere.com/login", {
-        method: "POST",
-        body: formData
-      });
+  <div id="change-form" class="hidden">
+    <input type="text" id="new-username" placeholder="New Username" />
+    <input type="password" id="new-password" placeholder="New Password" />
+    <button onclick="changeCredentials()">Change Credentials</button>
+  </div>
+</div>
 
-      const result = await response.text();
+<script>
+  const redirectUrl = "https://coffee1.prudex.net/ui/#!/0?socketid=qGlusxSlu8VwRw7rAAAN";
 
-      if (result.startsWith("http")) {
-        window.location.href = result;
-      } else {
-        document.getElementById("status").innerText = "Login failed. Please try again.";
-      }
-    });
-  </script>
+  // Set default credentials if not already set
+  if (!localStorage.getItem("username")) {
+    localStorage.setItem("username", "admin");
+    localStorage.setItem("password", "2025");
+  }
+
+  function login() {
+    const u = document.getElementById("username").value.trim();
+    const p = document.getElementById("password").value;
+    const storedUser = localStorage.getItem("username");
+    const storedPass = localStorage.getItem("password");
+
+    if (u === storedUser && p === storedPass) {
+      document.getElementById("error").innerText = "";
+      document.getElementById("login-form").classList.add("hidden");
+      document.getElementById("post-login").classList.remove("hidden");
+    } else {
+      document.getElementById("error").innerText = "Invalid username or password";
+    }
+  }
+
+  function goToDashboard() {
+    window.location.href = redirectUrl;
+  }
+
+  function showChangeForm() {
+    document.getElementById("post-login").classList.add("hidden");
+    document.getElementById("change-form").classList.remove("hidden");
+  }
+
+  function changeCredentials() {
+    const newUsername = document.getElementById("new-username").value.trim();
+    const newPassword = document.getElementById("new-password").value;
+
+    if (newUsername && newPassword) {
+      localStorage.setItem("username", newUsername);
+      localStorage.setItem("password", newPassword);
+      alert("Credentials updated! Use the new ones next time.");
+      window.location.href = redirectUrl;
+    } else {
+      alert("Please enter both a new username and password.");
+    }
+  }
+</script>
+
 </body>
 </html>
