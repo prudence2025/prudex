@@ -104,26 +104,50 @@
 </div>
 
 <script>
+  const API_URL = "https://your-backend-url.com"; // <-- Change this!
   const redirectUrl = "https://coffee1.prudex.net/ui/#!/0?socketid=qGlusxSlu8VwRw7rAAAN";
 
-  // Set default credentials if not already set
-  if (!localStorage.getItem("username")) {
-    localStorage.setItem("username", "admin");
-    localStorage.setItem("password", "2025");
-  }
-
-  function login() {
+  async function login() {
     const u = document.getElementById("username").value.trim();
     const p = document.getElementById("password").value;
-    const storedUser = localStorage.getItem("username");
-    const storedPass = localStorage.getItem("password");
 
-    if (u === storedUser && p === storedPass) {
+    const res = await fetch(`${API_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: u, password: p })
+    });
+
+    const data = await res.json();
+    if (data.success) {
       document.getElementById("error").innerText = "";
       document.getElementById("login-form").classList.add("hidden");
       document.getElementById("post-login").classList.remove("hidden");
     } else {
       document.getElementById("error").innerText = "Invalid username or password";
+    }
+  }
+
+  async function changeCredentials() {
+    const newUsername = document.getElementById("new-username").value.trim();
+    const newPassword = document.getElementById("new-password").value;
+
+    if (!newUsername || !newPassword) {
+      alert("Please enter both a new username and password.");
+      return;
+    }
+
+    const res = await fetch(`${API_URL}/change`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: newUsername, password: newPassword })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      alert("Credentials updated! Use the new ones next time.");
+      window.location.href = redirectUrl;
+    } else {
+      alert("Something went wrong.");
     }
   }
 
@@ -134,20 +158,6 @@
   function showChangeForm() {
     document.getElementById("post-login").classList.add("hidden");
     document.getElementById("change-form").classList.remove("hidden");
-  }
-
-  function changeCredentials() {
-    const newUsername = document.getElementById("new-username").value.trim();
-    const newPassword = document.getElementById("new-password").value;
-
-    if (newUsername && newPassword) {
-      localStorage.setItem("username", newUsername);
-      localStorage.setItem("password", newPassword);
-      alert("Credentials updated! Use the new ones next time.");
-      window.location.href = redirectUrl;
-    } else {
-      alert("Please enter both a new username and password.");
-    }
   }
 </script>
 
