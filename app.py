@@ -33,8 +33,13 @@ def update_credentials():
     else:
         return jsonify({"success": False, "message": "Invalid old credentials"}), 401
 
-# Optional test route
 @app.route('/')
 def home():
     return "Backend is working."
+
+# ✅ Add this route to test backend status
+@app.route('/ping', methods=['GET'])
+def ping():
+    return jsonify({"status": "connected"})
+
 
