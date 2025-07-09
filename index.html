@@ -133,7 +133,7 @@
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
 
-      const res = await fetch('https://Prudexbackend.pythonanywhere.com/login', {
+      const res = await fetch('https://prudexbackend.pythonanywhere.com/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -164,7 +164,7 @@
       const oldUsername = document.getElementById('username').value;
       const oldPassword = document.getElementById('password').value;
 
-      fetch('https://Prudexbackend.pythonanywhere.com/login', {
+      fetch('https://prudexbackend.pythonanywhere.com/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
