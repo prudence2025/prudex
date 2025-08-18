@@ -13,6 +13,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  margin: 0;
 }
 .card {
   background: rgba(255, 255, 255, 0.05);
@@ -22,6 +23,10 @@ body {
   text-align: center;
   width: 300px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  transition: transform 0.3s ease;
+}
+.card:hover {
+  transform: scale(1.05);
 }
 h1 {
   margin-bottom: 20px;
@@ -46,16 +51,16 @@ h1 {
 <script>
 async function fetchData() {
   try {
-    const res = await fetch('http://31.97.49.157:5000/latest');
+    const res = await fetch('https://prudex.net/prototype01'); // frontend URL that receives ESP32 POST
     const data = await res.json();
-    const device = data['Factory X WWTP'];
-    if(device){
-      document.getElementById('cod').innerText = 'COD: ' + device['01'];
-      document.getElementById('bod').innerText = 'BOD: ' + device['02'];
-      document.getElementById('temp').innerText = 'Temp: ' + device['03'] + ' °C';
-      document.getElementById('tss').innerText = 'TSS: ' + device['05'];
-      document.getElementById('turbidity').innerText = 'Turbidity: ' + device['04'];
-    }
+
+    // Directly use the received flat JSON
+    document.getElementById('cod').innerText = 'COD: ' + data['01'];
+    document.getElementById('bod').innerText = 'BOD: ' + data['02'];
+    document.getElementById('temp').innerText = 'Temp: ' + data['03'] + ' °C';
+    document.getElementById('tss').innerText = 'TSS: ' + data['05'];
+    document.getElementById('turbidity').innerText = 'Turbidity: ' + data['04'];
+
   } catch(e) {
     console.error("Failed to fetch:", e);
   }
