@@ -3,144 +3,644 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Factory X WWTP Sensor Data</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Factory X Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #7209b7;
+            --dark: #1a1a2e;
+            --glass: rgba(255, 255, 255, 0.15);
+            --gauge-bg: rgba(255, 255, 255, 0.1);
+            --vibrant-blue: #4895ef;
+            --vibrant-purple: #b5179e;
+            --vibrant-green: #38b000;
+            --vibrant-orange: #ff7b00;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
         }
-
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             color: white;
-            padding: 20px;
+            overflow-x: hidden;
         }
-
-        .container {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            width: 100%;
-            max-width: 900px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        }
-
+        
         header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            background: rgba(26, 26, 46, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            font-size: 1.5rem;
             font-weight: 600;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--vibrant-purple);
         }
-
-        p.subtitle {
-            opacity: 0.8;
-            font-weight: 300;
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
+        
+        .logo-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(to right, var(--vibrant-blue), var(--vibrant-purple));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(114, 9, 183, 0.5);
         }
-
-        .feature-card {
-            background: rgba(255, 255, 255, 0.1);
+        
+        .container {
             padding: 25px;
-            border-radius: 15px;
-            transition: transform 0.3s ease;
+            max-width: 1600px;
+            margin: 0 auto;
         }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            font-size: 2rem;
-            margin-bottom: 15px;
-            color: #fff;
-        }
-
-        .feature-title {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
+        
+        .dashboard-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
             font-weight: 600;
+            background: linear-gradient(to right, var(--vibrant-blue), var(--vibrant-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+            text-shadow: 0 0 10px rgba(72, 149, 239, 0.3);
         }
-
-        .feature-desc {
+        
+        .section {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title::before {
+            content: "";
+            display: block;
+            width: 5px;
+            height: 20px;
+            background: linear-gradient(to bottom, var(--vibrant-blue), var(--vibrant-purple));
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(72, 149, 239, 0.5);
+        }
+        
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .device {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .device::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            z-index: 1;
+        }
+        
+        .device:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .device-info {
+            z-index: 2;
+        }
+        
+        .device-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .device-location {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .status {
+            font-weight: 600;
+            z-index: 2;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        
+        .status.connected {
+            background: rgba(76, 201, 240, 0.2);
+            color: #4cc9f0;
+            border: 1px solid rgba(76, 201, 240, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        .status.disconnected {
+            background: rgba(247, 37, 133, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(247, 37, 133, 0.4);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 201, 240, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 201, 240, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 201, 240, 0); }
+        }
+        
+        .gauges {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .gauge {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gauge::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+        }
+        
+        .gauge:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .gauge h3 {
+            margin-bottom: 15px;
+            font-weight: 500;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .gauge-value {
+            font-size: 2.5rem;
+            margin: 15px 0;
+            font-weight: 600;
+            z-index: 2;
+            position: relative;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+        
+        .gauge-container {
+            width: 100%;
+            height: 150px;
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .gauge-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+        
+        .gauge-bg {
+            fill: none;
+            stroke: var(--gauge-bg);
+            stroke-width: 12;
+        }
+        
+        .gauge-fg {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+            animation: gauge-fill 1.5s ease-out forwards;
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+        
+        .gauge-marker {
+            position: absolute;
+            width: 4px;
+            height: 15px;
+            background: white;
+            border-radius: 2px;
+            transform-origin: 50% 100%;
+            left: 50%;
+            bottom: 50%;
+            opacity: 0.3;
+        }
+        
+        .gauge-label {
+            position: absolute;
+            font-size: 0.7rem;
+            opacity: 0.8;
+            transform: translateX(-50%);
+        }
+        
+        .gauge-min {
+            left: 10%;
+            bottom: 10%;
+        }
+        
+        .gauge-max {
+            right: 10%;
+            bottom: 10%;
+        }
+        
+        .gauge-optimal {
+            left: 50%;
+            top: 10%;
+            color: var(--vibrant-green);
+            font-weight: 500;
+        }
+        
+        .gauge-critical {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: var(--danger);
+            border-radius: 2px;
+            left: 0;
+            top: 20%;
+            opacity: 0.5;
+            filter: drop-shadow(0 0 5px var(--danger));
+        }
+        
+        .gauge-status {
+            font-weight: 500;
+            z-index: 2;
+            position: relative;
+            margin-top: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .status-optimal {
+            background: rgba(56, 176, 0, 0.2);
+            color: var(--vibrant-green);
+            border: 1px solid rgba(56, 176, 0, 0.4);
+        }
+        
+        .status-warning {
+            background: rgba(248, 150, 30, 0.2);
+            color: var(--warning);
+            border: 1px solid rgba(248, 150, 30, 0.4);
+        }
+        
+        .status-critical {
+            background: rgba(247, 37, 133, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(247, 37, 133, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-disconnected {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        @keyframes gauge-fill {
+            from { stroke-dasharray: 0, 100; }
+        }
+        
+        /* Gauge-specific colors */
+        .gauge-ph .gauge-fg {
+            stroke: var(--vibrant-blue);
+        }
+        
+        .gauge-tds .gauge-fg {
+            stroke: var(--vibrant-purple);
+        }
+        
+        .gauge-cod .gauge-fg {
+            stroke: var(--warning);
+        }
+        
+        .gauge-temp .gauge-fg {
+            stroke: var(--danger);
+        }
+        
+        .time-display {
             font-size: 0.9rem;
             opacity: 0.9;
-            font-weight: 300;
+            font-weight: 400;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 30px 20px;
-            }
-            h1 {
-                font-size: 2rem;
-            }
-            .features {
+        
+        @media (max-width: 768px) {
+            .device-grid, .gauges {
                 grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .section {
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                    <polyline points="13 2 13 9 20 9"></polyline>
+                </svg>
+            </div>
+            <span>Factory X</span>
+        </div>
+        <div class="time-display" id="current-time">Loading...</div>
+    </header>
+    
     <div class="container">
-        <header>
-            <h1>Factory X WWTP Sensor Data</h1>
-            <p class="subtitle">Live readings from the ESP32 sensors</p>
-        </header>
-
-        <div class="features" id="sensor-data">
-            <!-- Sensor data cards will be dynamically inserted here -->
+        <h1 class="dashboard-title">Water Treatment Monitoring</h1>
+        
+        <!-- Device Status Grid -->
+        <div class="section">
+            <h2 class="section-title">Device Status</h2>
+            <div class="device-grid">
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">pH Device</div>
+                        <div class="device-location">WWTP Horana</div>
+                    </div>
+                    <span class="status connected">7.7</span>
+                </div>
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">TSS Device</div>
+                        <div class="device-location">WWTP Jaffna</div>
+                    </div>
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">COD Device</div>
+                        <div class="device-location">WWTP Jaffna</div>
+                    </div>
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">Conductivity Device</div>
+                        <div class="device-location">RO in Kandy</div>
+                    </div>
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">BOD Device</div>
+                        <div class="device-location">WWTP Jaffna</div>
+                    </div>
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">Temp Device</div>
+                        <div class="device-location">WWTP Jaffna</div>
+                    </div>
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">Turbidity Device</div>
+                        <div class="device-location">WWTP Jaffna</div>
+                    </div>
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">Flow Meter</div>
+                        <div class="device-location">RO in Kandy</div>
+                    </div>
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">ORP Device</div>
+                        <div class="device-location">WWTP Horana</div>
+                    </div>
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+                <div class="device">
+                    <div class="device-info">
+                        <div class="device-name">TDS Device</div>
+                        <div class="device-location">RO in Galle</div>
+                    </div>
+                    <span class="status disconnected">Disconnected</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gauges -->
+        <div class="section">
+            <h2 class="section-title">Key Metrics</h2>
+            <div class="gauges">
+                <div class="gauge gauge-ph">
+                    <h3>pH Level (WWTP Horana)</h3>
+                    <div class="gauge-value">7.7</div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 36 36">
+                            <path class="gauge-bg" d="M18 2.0845a16 16 0 1 1 0 31.831a16 16 0 1 1 0-31.831"/>
+                            <path class="gauge-fg" stroke-dasharray="77,100" d="M18 2.0845a16 16 0 1 1 0 31.831a16 16 0 1 1 0-31.831"/>
+                        </svg>
+                        <div class="gauge-marker" style="transform: rotate(-70deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(-35deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(0deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(35deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(70deg);"></div>
+                        <div class="gauge-min">0</div>
+                        <div class="gauge-max">14</div>
+                        <div class="gauge-optimal">7-8</div>
+                        <div class="gauge-critical"></div>
+                    </div>
+                    <div class="gauge-status status-optimal">Optimal</div>
+                </div>
+                <div class="gauge gauge-tds">
+                    <h3>TDS Level (RO in Galle)</h3>
+                    <div class="gauge-value">0</div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 36 36">
+                            <path class="gauge-bg" d="M18 2.0845a16 16 0 1 1 0 31.831a16 16 0 1 1 0-31.831"/>
+                            <path class="gauge-fg" stroke-dasharray="0,100" d="M18 2.0845a16 16 0 1 1 0 31.831a16 16 0 1 1 0-31.831"/>
+                        </svg>
+                        <div class="gauge-marker" style="transform: rotate(-70deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(-35deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(0deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(35deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(70deg);"></div>
+                        <div class="gauge-min">0</div>
+                        <div class="gauge-max">1000</div>
+                        <div class="gauge-optimal">0-500</div>
+                    </div>
+                    <div class="gauge-status status-disconnected">Disconnected</div>
+                </div>
+                <div class="gauge gauge-cod">
+                    <h3>COD Level (WWTP Jaffna)</h3>
+                    <div class="gauge-value">0</div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 36 36">
+                            <path class="gauge-bg" d="M18 2.0845a16 16 0 1 1 0 31.831a16 16 0 1 1 0-31.831"/>
+                            <path class="gauge-fg" stroke-dasharray="0,100" d="M18 2.0845a16 16 0 1 1 0 31.831a16 16 0 1 1 0-31.831"/>
+                        </svg>
+                        <div class="gauge-marker" style="transform: rotate(-70deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(-35deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(0deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(35deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(70deg);"></div>
+                        <div class="gauge-min">0</div>
+                        <div class="gauge-max">500</div>
+                        <div class="gauge-optimal">0-50</div>
+                    </div>
+                    <div class="gauge-status status-disconnected">Disconnected</div>
+                </div>
+                <div class="gauge gauge-temp">
+                    <h3>Temperature (WWTP Jaffna)</h3>
+                    <div class="gauge-value">0°C</div>
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 36 36">
+                            <path class="gauge-bg" d="M18 2.0845a16 16 0 1 1 0 31.831a16 16 0 1 1 0-31.831"/>
+                            <path class="gauge-fg" stroke-dasharray="0,100" d="M18 2.0845a16 16 0 1 1 0 31.831a16 16 0 1 1 0-31.831"/>
+                        </svg>
+                        <div class="gauge-marker" style="transform: rotate(-70deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(-35deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(0deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(35deg);"></div>
+                        <div class="gauge-marker" style="transform: rotate(70deg);"></div>
+                        <div class="gauge-min">0</div>
+                        <div class="gauge-max">100</div>
+                        <div class="gauge-optimal">15-25</div>
+                    </div>
+                    <div class="gauge-status status-disconnected">Disconnected</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-    async function fetchData() {
-        try {
-            // Fetch latest readings from Flask backend
-            const response = await fetch('http://31.97.49.157:5000/latest');
-            const data = await response.json();
-            const container = document.getElementById('sensor-data');
-            container.innerHTML = '';
-
-            for (const device in data) {
-                const d = data[device];
-                container.innerHTML += `
-                    <div class="feature-card">
-                        <div class="feature-icon">🌡️</div>
-                        <h3 class="feature-title">${device}</h3>
-                        <p class="feature-desc">Temperature: ${d.temperature} °C</p>
-                        <p class="feature-desc">COD: ${d.cod} mg/L</p>
-                        <p class="feature-desc">BOD: ${d.bod} mg/L</p>
-                        <p class="feature-desc">TSS: ${d.tss} mg/L</p>
-                        <p class="feature-desc">Turbidity: ${d.turbidity} NTU</p>
-                    </div>
-                `;
-            }
-        } catch (err) {
-            console.error('Failed to fetch data', err);
+        // Update time display
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            const dateString = now.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('current-time').innerHTML = `${dateString} | ${timeString}`;
         }
-    }
-
-    // Fetch every 5 seconds
-    setInterval(fetchData, 5000);
-    fetchData();
+        
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Animate gauges on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const gauges = document.querySelectorAll('.gauge-fg');
+            gauges.forEach(gauge => {
+                const value = gauge.getAttribute('stroke-dasharray').split(',')[0];
+                gauge.style.strokeDasharray = `0,100`;
+                setTimeout(() => {
+                    gauge.style.strokeDasharray = `${value},100`;
+                }, 100);
+            });
+            
+            // Simulate data changes for demo purposes
+            setInterval(() => {
+                const phGauge = document.querySelector('.gauge-ph .gauge-value');
+                const currentPH = parseFloat(phGauge.textContent);
+                const newPH = (currentPH + (Math.random() * 0.4 - 0.2)).toFixed(1);
+                phGauge.textContent = Math.max(6.5, Math.min(8.5, newPH));
+                
+                // Update gauge arc
+                const phPercent = ((parseFloat(newPH) / 14) * 100;
+                document.querySelector('.gauge-ph .gauge-fg').style.strokeDasharray = `${phPercent},100`;
+                
+                // Update status
+                const phStatus = document.querySelector('.gauge-ph .gauge-status');
+                if (newPH < 6.8 || newPH > 8.2) {
+                    phStatus.textContent = newPH < 6.8 ? "Too Acidic" : "Too Alkaline";
+                    phStatus.className = "gauge-status status-critical";
+                } else if (newPH < 7.0 || newPH > 8.0) {
+                    phStatus.textContent = "Warning";
+                    phStatus.className = "gauge-status status-warning";
+                } else {
+                    phStatus.textContent = "Optimal";
+                    phStatus.className = "gauge-status status-optimal";
+                }
+            }, 3000);
+        });
     </script>
 </body>
 </html>
