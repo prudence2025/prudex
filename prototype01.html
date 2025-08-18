@@ -6,120 +6,28 @@
     <title>Modern Prototype</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            padding: 20px;
-        }
-        
-        .container {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px;
-            width: 100%;
-            max-width: 800px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        p.subtitle {
-            opacity: 0.8;
-            font-weight: 300;
-        }
-        
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-        
-        .feature-card {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 25px;
-            border-radius: 15px;
-            transition: transform 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .feature-icon {
-            font-size: 2rem;
-            margin-bottom: 15px;
-            color: #fff;
-        }
-        
-        .feature-title {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        .feature-desc {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            font-weight: 300;
-        }
-        
-        .cta {
-            text-align: center;
-        }
-        
-        .cta-button {
-            background: white;
-            color: #764ba2;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        }
-        
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height:100vh; display:flex; justify-content:center; align-items:center; color:white; padding:20px; }
+        .container { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 20px; padding:40px; width:100%; max-width:800px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+        header { text-align:center; margin-bottom:40px; }
+        h1 { font-size:2.5rem; margin-bottom:10px; font-weight:600; }
+        p.subtitle { opacity:0.8; font-weight:300; }
+        .features { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:30px; margin-bottom:40px; }
+        .feature-card { background: rgba(255,255,255,0.1); padding:25px; border-radius:15px; transition: transform 0.3s ease; }
+        .feature-card:hover { transform: translateY(-5px); }
+        .feature-icon { font-size:2rem; margin-bottom:15px; color:#fff; }
+        .feature-title { font-size:1.2rem; margin-bottom:10px; font-weight:600; }
+        .feature-desc { font-size:0.9rem; opacity:0.8; font-weight:300; }
+        .cta { text-align:center; }
+        .cta-button { background:white; color:#764ba2; border:none; padding:15px 40px; border-radius:50px; font-size:1.1rem; font-weight:600; cursor:pointer; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .cta-button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
         @media (max-width: 600px) {
-            .container {
-                padding: 30px 20px;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .features {
-                grid-template-columns: 1fr;
-            }
+            .container { padding:30px 20px; }
+            h1 { font-size:2rem; }
+            .features { grid-template-columns:1fr; }
         }
+        .data-display { margin-top:30px; text-align:center; }
+        .data-item { margin:10px 0; font-size:1.2rem; }
     </style>
 </head>
 <body>
@@ -152,6 +60,41 @@
         <div class="cta">
             <button class="cta-button">Get Started</button>
         </div>
+
+        <!-- Live Data Display -->
+        <div class="data-display">
+            <h2>Live COD Analyzer Data</h2>
+            <div class="data-item">Device: <span id="device">Loading...</span></div>
+            <div class="data-item">COD: <span id="cod">Loading...</span></div>
+            <div class="data-item">Temperature: <span id="temp">Loading...</span> °C</div>
+            <div class="data-item">BOD: <span id="bod">Loading...</span></div>
+            <div class="data-item">TSS: <span id="tss">Loading...</span></div>
+            <div class="data-item">Turbidity: <span id="turbidity">Loading...</span></div>
+        </div>
     </div>
+
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch("http://31.97.49.157:5000/latest");
+                const data = await response.json();
+                const deviceName = Object.keys(data)[0]; // assuming single device
+                const deviceData = data[deviceName];
+
+                document.getElementById("device").innerText = deviceName;
+                document.getElementById("cod").innerText = deviceData.cod ?? "-";
+                document.getElementById("temp").innerText = deviceData.temperature ?? "-";
+                document.getElementById("bod").innerText = deviceData.bod ?? "-";
+                document.getElementById("tss").innerText = deviceData.tss ?? "-";
+                document.getElementById("turbidity").innerText = deviceData.turbidity ?? "-";
+            } catch (err) {
+                console.error("Error fetching data:", err);
+            }
+        }
+
+        // fetch every 5 seconds
+        fetchData();
+        setInterval(fetchData, 5000);
+    </script>
 </body>
 </html>
