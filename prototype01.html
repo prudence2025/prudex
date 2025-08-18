@@ -51,15 +51,15 @@ h1 {
 <script>
 async function fetchData() {
   try {
-    const res = await fetch('https://prudex.net/prototype01'); // frontend URL that receives ESP32 POST
+    const res = await fetch('http://31.97.49.157:5000/latest'); // Backend GET endpoint
     const data = await res.json();
 
-    // Directly use the received flat JSON
-    document.getElementById('cod').innerText = 'COD: ' + data['01'];
-    document.getElementById('bod').innerText = 'BOD: ' + data['02'];
-    document.getElementById('temp').innerText = 'Temp: ' + data['03'] + ' °C';
-    document.getElementById('tss').innerText = 'TSS: ' + data['05'];
-    document.getElementById('turbidity').innerText = 'Turbidity: ' + data['04'];
+    // Update UI with received data
+    document.getElementById('cod').innerText = 'COD: ' + (data['01'] ?? '--');
+    document.getElementById('bod').innerText = 'BOD: ' + (data['02'] ?? '--');
+    document.getElementById('temp').innerText = 'Temp: ' + (data['03'] ?? '--') + ' °C';
+    document.getElementById('tss').innerText = 'TSS: ' + (data['05'] ?? '--');
+    document.getElementById('turbidity').innerText = 'Turbidity: ' + (data['04'] ?? '--');
 
   } catch(e) {
     console.error("Failed to fetch:", e);
