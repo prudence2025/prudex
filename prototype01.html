@@ -29,18 +29,30 @@ body {
   transform: scale(1.05);
 }
 h1 {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   font-size: 24px;
+}
+#status {
+  margin-bottom: 20px;
+  font-size: 16px;
+  font-weight: bold;
 }
 .data-item {
   font-size: 18px;
   margin: 10px 0;
+}
+.connected {
+  color: #00ff00; /* green */
+}
+.disconnected {
+  color: #ff4d4d; /* red */
 }
 </style>
 </head>
 <body>
 <div class="card">
   <h1>Factory X WWTP</h1>
+  <div id="status" class="disconnected">Status: Disconnected</div>
   <div class="data-item" id="cod">COD: --</div>
   <div class="data-item" id="bod">BOD: --</div>
   <div class="data-item" id="temp">Temp: -- °C</div>
@@ -54,6 +66,10 @@ async function fetchData() {
     const res = await fetch('http://31.97.49.157:5000/latest'); // Backend GET endpoint
     const data = await res.json();
 
+    // Update connection status
+    document.getElementById('status').innerText = 'Status: Connected';
+    document.getElementById('status').className = 'connected';
+
     // Update UI with received data
     document.getElementById('cod').innerText = 'COD: ' + (data['01'] ?? '--');
     document.getElementById('bod').innerText = 'BOD: ' + (data['02'] ?? '--');
@@ -63,6 +79,8 @@ async function fetchData() {
 
   } catch(e) {
     console.error("Failed to fetch:", e);
+    document.getElementById('status').innerText = 'Status: Disconnected';
+    document.getElementById('status').className = 'disconnected';
   }
 }
 
