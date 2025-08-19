@@ -463,6 +463,26 @@
             stroke: var(--danger);
         }
         
+        .gauge-orp .gauge-fg {
+            stroke: var(--vibrant-green);
+        }
+        
+        .gauge-bod .gauge-fg {
+            stroke: var(--info);
+        }
+        
+        .gauge-tss .gauge-fg {
+            stroke: var(--vibrant-orange);
+        }
+        
+        .gauge-turbidity .gauge-fg {
+            stroke: #7209b7;
+        }
+        
+        .gauge-conductivity .gauge-fg {
+            stroke: #4cc9f0;
+        }
+        
         .time-display {
             font-size: 0.9rem;
             color: var(--text-light);
@@ -539,20 +559,95 @@
             font-weight: 500;
         }
 
-        .logout-btn {
-            background: var(--danger);
-            color: white;
-            border: none;
+        /* Header Button Styles */
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-btn {
             padding: 8px 15px;
             border-radius: 20px;
             font-size: 0.9rem;
             cursor: pointer;
-            margin-left: 15px;
             transition: all 0.3s;
+            border: none;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
         }
 
         .logout-btn:hover {
             background: #d61a6b;
+        }
+
+        .download-btn {
+            background: var(--vibrant-blue);
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #3a56d6;
+        }
+
+        .dashboard-btn {
+            background: var(--vibrant-purple);
+            color: white;
+            position: relative;
+        }
+
+        .dashboard-btn:hover {
+            background: #8a12a1;
+        }
+
+        /* Dashboard Dropdown */
+        .dashboard-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 180px;
+            z-index: 20;
+            display: none;
+        }
+
+        .dashboard-dropdown.show {
+            display: block;
+        }
+
+        .dashboard-dropdown a {
+            display: block;
+            padding: 8px 15px;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .dashboard-dropdown a:hover {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        .dashboard-dropdown a.active {
+            background: rgba(67, 97, 238, 0.2);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Location-specific dashboard styles */
+        .location-dashboard {
+            display: none;
+        }
+
+        .location-dashboard.active {
+            display: block;
         }
         
         @media (max-width: 768px) {
@@ -581,6 +676,17 @@
             .graph-container {
                 grid-template-columns: 1fr;
             }
+
+            .header-buttons {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 5px;
+            }
+
+            .header-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -608,171 +714,560 @@
                 </div>
                 <span>Factory X</span>
             </div>
-            <div>
+            <div class="header-buttons">
                 <div class="time-display" id="current-time">Loading...</div>
-                <button class="logout-btn" id="logout-btn">Logout</button>
+                <button class="header-btn download-btn" id="download-btn">Download Data</button>
+                <div style="position: relative;">
+                    <button class="header-btn dashboard-btn" id="dashboard-btn">Dashboard</button>
+                    <div class="dashboard-dropdown" id="dashboard-dropdown">
+                        <a href="#" class="active" data-location="main">Main Dashboard</a>
+                        <a href="#" data-location="kandy">Kandy</a>
+                        <a href="#" data-location="colombo">Colombo</a>
+                        <a href="#" data-location="jaffna">Jaffna</a>
+                    </div>
+                </div>
+                <button class="header-btn logout-btn" id="logout-btn">Logout</button>
             </div>
         </header>
         
         <div class="container">
-            <h1 class="dashboard-title">Water Treatment Monitoring</h1>
-            
-            <!-- Device Status Grid -->
-            <div class="section">
-                <h2 class="section-title">Device Status</h2>
-                <div class="device-grid">
-                    <div class="device" data-device="ph">
-                        <div class="device-info">
-                            <div class="device-name">pH Device</div>
-                            <div class="device-location">WWTP Horana</div>
+            <!-- Main Dashboard -->
+            <div class="location-dashboard active" id="main-dashboard">
+                <h1 class="dashboard-title">Water Treatment Monitoring</h1>
+                
+                <!-- Device Status Grid -->
+                <div class="section">
+                    <h2 class="section-title">Device Status</h2>
+                    <div class="device-grid">
+                        <div class="device" data-device="ph">
+                            <div class="device-info">
+                                <div class="device-name">pH Device</div>
+                                <div class="device-location">WWTP Horana</div>
+                            </div>
+                            <span class="status connected">7.7</span>
                         </div>
-                        <span class="status connected">7.7</span>
+                        <div class="device" data-device="tss">
+                            <div class="device-info">
+                                <div class="device-name">TSS Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="cod">
+                            <div class="device-info">
+                                <div class="device-name">COD Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="conductivity">
+                            <div class="device-info">
+                                <div class="device-name">Conductivity Device</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="bod">
+                            <div class="device-info">
+                                <div class="device-name">BOD Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="temp">
+                            <div class="device-info">
+                                <div class="device-name">Temp Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="turbidity">
+                            <div class="device-info">
+                                <div class="device-name">Turbidity Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="flow">
+                            <div class="device-info">
+                                <div class="device-name">Flow Meter</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="orp">
+                            <div class="device-info">
+                                <div class="device-name">ORP Device</div>
+                                <div class="device-location">WWTP Horana</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="tds">
+                            <div class="device-info">
+                                <div class="device-name">TDS Device</div>
+                                <div class="device-location">RO in Galle</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
                     </div>
-                    <div class="device" data-device="tss">
-                        <div class="device-info">
-                            <div class="device-name">TSS Device</div>
-                            <div class="device-location">WWTP Jaffna</div>
+                </div>
+                
+                <!-- Gauges -->
+                <div class="section">
+                    <h2 class="section-title">Key Metrics</h2>
+                    <div class="gauges">
+                        <div class="gauge gauge-ph">
+                            <h3>pH Level (WWTP Horana)</h3>
+                            <div class="gauge-value">7.7</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="77,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">14</div>
+                                <div class="gauge-optimal">7-8</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
                         </div>
-                        <span class="status disconnected">Disconnected</span>
-                    </div>
-                    <div class="device" data-device="cod">
-                        <div class="device-info">
-                            <div class="device-name">COD Device</div>
-                            <div class="device-location">WWTP Jaffna</div>
+                        <div class="gauge gauge-tds">
+                            <h3>TDS Level (RO in Galle)</h3>
+                            <div class="gauge-value">0</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">1000</div>
+                                <div class="gauge-optimal">0-500</div>
+                            </div>
+                            <div class="gauge-status status-disconnected">Disconnected</div>
                         </div>
-                        <span class="status disconnected">Disconnected</span>
-                    </div>
-                    <div class="device" data-device="conductivity">
-                        <div class="device-info">
-                            <div class="device-name">Conductivity Device</div>
-                            <div class="device-location">RO in Kandy</div>
+                        <div class="gauge gauge-cod">
+                            <h3>COD Level (WWTP Jaffna)</h3>
+                            <div class="gauge-value">0</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">500</div>
+                                <div class="gauge-optimal">0-50</div>
+                            </div>
+                            <div class="gauge-status status-disconnected">Disconnected</div>
                         </div>
-                        <span class="status disconnected">Disconnected</span>
-                    </div>
-                    <div class="device" data-device="bod">
-                        <div class="device-info">
-                            <div class="device-name">BOD Device</div>
-                            <div class="device-location">WWTP Jaffna</div>
+                        <div class="gauge gauge-temp">
+                            <h3>Temperature (WWTP Jaffna)</h3>
+                            <div class="gauge-value">0°C</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">100</div>
+                                <div class="gauge-optimal">15-25</div>
+                            </div>
+                            <div class="gauge-status status-disconnected">Disconnected</div>
                         </div>
-                        <span class="status disconnected">Disconnected</span>
-                    </div>
-                    <div class="device" data-device="temp">
-                        <div class="device-info">
-                            <div class="device-name">Temp Device</div>
-                            <div class="device-location">WWTP Jaffna</div>
-                        </div>
-                        <span class="status disconnected">Disconnected</span>
-                    </div>
-                    <div class="device" data-device="turbidity">
-                        <div class="device-info">
-                            <div class="device-name">Turbidity Device</div>
-                            <div class="device-location">WWTP Jaffna</div>
-                        </div>
-                        <span class="status disconnected">Disconnected</span>
-                    </div>
-                    <div class="device" data-device="flow">
-                        <div class="device-info">
-                            <div class="device-name">Flow Meter</div>
-                            <div class="device-location">RO in Kandy</div>
-                        </div>
-                        <span class="status disconnected">Disconnected</span>
-                    </div>
-                    <div class="device" data-device="orp">
-                        <div class="device-info">
-                            <div class="device-name">ORP Device</div>
-                            <div class="device-location">WWTP Horana</div>
-                        </div>
-                        <span class="status disconnected">Disconnected</span>
-                    </div>
-                    <div class="device" data-device="tds">
-                        <div class="device-info">
-                            <div class="device-name">TDS Device</div>
-                            <div class="device-location">RO in Galle</div>
-                        </div>
-                        <span class="status disconnected">Disconnected</span>
                     </div>
                 </div>
             </div>
             
-            <!-- Gauges -->
-            <div class="section">
-                <h2 class="section-title">Key Metrics</h2>
-                <div class="gauges">
-                    <div class="gauge gauge-ph">
-                        <h3>pH Level (WWTP Horana)</h3>
-                        <div class="gauge-value">7.7</div>
-                        <div class="gauge-container">
-                            <svg class="gauge-svg" viewBox="0 0 100 50">
-                                <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                <path class="gauge-fg" stroke-dasharray="77,100" d="M10 50 A40 40 0 0 1 90 50" />
-                            </svg>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                            <div class="gauge-min">0</div>
-                            <div class="gauge-max">14</div>
-                            <div class="gauge-optimal">7-8</div>
+            <!-- Kandy Dashboard -->
+            <div class="location-dashboard" id="kandy-dashboard">
+                <h1 class="dashboard-title">Kandy Water Treatment</h1>
+                
+                <!-- Device Status Grid -->
+                <div class="section">
+                    <h2 class="section-title">Device Status</h2>
+                    <div class="device-grid">
+                        <div class="device" data-device="ph">
+                            <div class="device-info">
+                                <div class="device-name">pH Device</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status connected">7.2</span>
                         </div>
-                        <div class="gauge-status status-optimal">Optimal</div>
+                        <div class="device" data-device="orp">
+                            <div class="device-info">
+                                <div class="device-name">ORP Device</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status connected">450 mV</span>
+                        </div>
+                        <div class="device" data-device="conductivity">
+                            <div class="device-info">
+                                <div class="device-name">Conductivity Device</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status connected">250 µS/cm</span>
+                        </div>
+                        <div class="device" data-device="flow">
+                            <div class="device-info">
+                                <div class="device-name">Flow Meter</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status connected">120 L/min</span>
+                        </div>
                     </div>
-                    <div class="gauge gauge-tds">
-                        <h3>TDS Level (RO in Galle)</h3>
-                        <div class="gauge-value">0</div>
-                        <div class="gauge-container">
-                            <svg class="gauge-svg" viewBox="0 0 100 50">
-                                <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                            </svg>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                            <div class="gauge-min">0</div>
-                            <div class="gauge-max">1000</div>
-                            <div class="gauge-optimal">0-500</div>
+                </div>
+                
+                <!-- Gauges -->
+                <div class="section">
+                    <h2 class="section-title">Key Metrics</h2>
+                    <div class="gauges">
+                        <div class="gauge gauge-ph">
+                            <h3>pH Level (RO in Kandy)</h3>
+                            <div class="gauge-value">7.2</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="72,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">14</div>
+                                <div class="gauge-optimal">6.5-8.5</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
                         </div>
-                        <div class="gauge-status status-disconnected">Disconnected</div>
+                        <div class="gauge gauge-orp">
+                            <h3>ORP Level (RO in Kandy)</h3>
+                            <div class="gauge-value">450 mV</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="45,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">-1000</div>
+                                <div class="gauge-max">1000</div>
+                                <div class="gauge-optimal">400-600</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-conductivity">
+                            <h3>Conductivity (RO in Kandy)</h3>
+                            <div class="gauge-value">250 µS/cm</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="25,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">1000</div>
+                                <div class="gauge-optimal">0-500</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
                     </div>
-                    <div class="gauge gauge-cod">
-                        <h3>COD Level (WWTP Jaffna)</h3>
-                        <div class="gauge-value">0</div>
-                        <div class="gauge-container">
-                            <svg class="gauge-svg" viewBox="0 0 100 50">
-                                <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                            </svg>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                            <div class="gauge-min">0</div>
-                            <div class="gauge-max">500</div>
-                            <div class="gauge-optimal">0-50</div>
+                </div>
+            </div>
+            
+            <!-- Colombo Dashboard -->
+            <div class="location-dashboard" id="colombo-dashboard">
+                <h1 class="dashboard-title">Colombo Water Treatment</h1>
+                
+                <!-- Device Status Grid -->
+                <div class="section">
+                    <h2 class="section-title">Device Status</h2>
+                    <div class="device-grid">
+                        <div class="device" data-device="cod">
+                            <div class="device-info">
+                                <div class="device-name">COD Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">35 mg/L</span>
                         </div>
-                        <div class="gauge-status status-disconnected">Disconnected</div>
+                        <div class="device" data-device="bod">
+                            <div class="device-info">
+                                <div class="device-name">BOD Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">12 mg/L</span>
+                        </div>
+                        <div class="device" data-device="temp">
+                            <div class="device-info">
+                                <div class="device-name">Temp Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">22°C</span>
+                        </div>
+                        <div class="device" data-device="turbidity">
+                            <div class="device-info">
+                                <div class="device-name">Turbidity Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">5 NTU</span>
+                        </div>
+                        <div class="device" data-device="tss">
+                            <div class="device-info">
+                                <div class="device-name">TSS Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">18 mg/L</span>
+                        </div>
                     </div>
-                    <div class="gauge gauge-temp">
-                        <h3>Temperature (WWTP Jaffna)</h3>
-                        <div class="gauge-value">0°C</div>
-                        <div class="gauge-container">
-                            <svg class="gauge-svg" viewBox="0 0 100 50">
-                                <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                            </svg>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                            <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                            <div class="gauge-min">0</div>
-                            <div class="gauge-max">100</div>
-                            <div class="gauge-optimal">15-25</div>
+                </div>
+                
+                <!-- Gauges -->
+                <div class="section">
+                    <h2 class="section-title">Key Metrics</h2>
+                    <div class="gauges">
+                        <div class="gauge gauge-cod">
+                            <h3>COD Level (WWTP Colombo)</h3>
+                            <div class="gauge-value">35 mg/L</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="35,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">500</div>
+                                <div class="gauge-optimal">0-50</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
                         </div>
-                        <div class="gauge-status status-disconnected">Disconnected</div>
+                        <div class="gauge gauge-bod">
+                            <h3>BOD Level (WWTP Colombo)</h3>
+                            <div class="gauge-value">12 mg/L</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="12,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">300</div>
+                                <div class="gauge-optimal">0-30</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-temp">
+                            <h3>Temperature (WWTP Colombo)</h3>
+                            <div class="gauge-value">22°C</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="22,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">100</div>
+                                <div class="gauge-optimal">15-25</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-turbidity">
+                            <h3>Turbidity (WWTP Colombo)</h3>
+                            <div class="gauge-value">5 NTU</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="5,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">100</div>
+                                <div class="gauge-optimal">0-10</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-tss">
+                            <h3>TSS Level (WWTP Colombo)</h3>
+                            <div class="gauge-value">18 mg/L</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="18,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">500</div>
+                                <div class="gauge-optimal">0-30</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Jaffna Dashboard -->
+            <div class="location-dashboard" id="jaffna-dashboard">
+                <h1 class="dashboard-title">Jaffna Water Treatment</h1>
+                
+                <!-- Device Status Grid -->
+                <div class="section">
+                    <h2 class="section-title">Device Status</h2>
+                    <div class="device-grid">
+                        <div class="device" data-device="conductivity">
+                            <div class="device-info">
+                                <div class="device-name">Conductivity Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status connected">1800 µS/cm</span>
+                        </div>
+                        <div class="device" data-device="tds">
+                            <div class="device-info">
+                                <div class="device-name">TDS Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status connected">1200 mg/L</span>
+                        </div>
+                        <div class="device" data-device="ph">
+                            <div class="device-info">
+                                <div class="device-name">pH Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status connected">8.1</span>
+                        </div>
+                        <div class="device" data-device="temp">
+                            <div class="device-info">
+                                <div class="device-name">Temp Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status connected">28°C</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gauges -->
+                <div class="section">
+                    <h2 class="section-title">Key Metrics</h2>
+                    <div class="gauges">
+                        <div class="gauge gauge-conductivity">
+                            <h3>Conductivity (WWTP Jaffna)</h3>
+                            <div class="gauge-value">1800 µS/cm</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="90,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">2000</div>
+                                <div class="gauge-optimal">0-1000</div>
+                            </div>
+                            <div class="gauge-status status-warning">High</div>
+                        </div>
+                        <div class="gauge gauge-tds">
+                            <h3>TDS Level (WWTP Jaffna)</h3>
+                            <div class="gauge-value">1200 mg/L</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="60,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">2000</div>
+                                <div class="gauge-optimal">0-500</div>
+                            </div>
+                            <div class="gauge-status status-warning">High</div>
+                        </div>
+                        <div class="gauge gauge-ph">
+                            <h3>pH Level (WWTP Jaffna)</h3>
+                            <div class="gauge-value">8.1</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="81,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">14</div>
+                                <div class="gauge-optimal">6.5-8.5</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-temp">
+                            <h3>Temperature (WWTP Jaffna)</h3>
+                            <div class="gauge-value">28°C</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="28,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">100</div>
+                                <div class="gauge-optimal">15-25</div>
+                            </div>
+                            <div class="gauge-status status-warning">High</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -813,6 +1308,9 @@
             const errorMessage = document.getElementById('error-message');
             const usernameInput = document.getElementById('username');
             const passwordInput = document.getElementById('password');
+            const downloadBtn = document.getElementById('download-btn');
+            const dashboardBtn = document.getElementById('dashboard-btn');
+            const dashboardDropdown = document.getElementById('dashboard-dropdown');
             
             // Check if user is already logged in (for page refresh)
             if(localStorage.getItem('loggedIn') === 'true') {
@@ -841,6 +1339,58 @@
                 loginPage.style.display = 'flex';
                 usernameInput.value = '';
                 passwordInput.value = '';
+            });
+            
+            // Download button click
+            downloadBtn.addEventListener('click', () => {
+                alert('Data download functionality would be implemented here.\nThis would export the current dashboard data in CSV/Excel format.');
+            });
+            
+            // Dashboard dropdown toggle
+            dashboardBtn.addEventListener('click', () => {
+                dashboardDropdown.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            window.addEventListener('click', (e) => {
+                if (!e.target.matches('#dashboard-btn')) {
+                    if (dashboardDropdown.classList.contains('show')) {
+                        dashboardDropdown.classList.remove('show');
+                    }
+                }
+            });
+            
+            // Dashboard selection
+            const dashboardLinks = document.querySelectorAll('.dashboard-dropdown a');
+            dashboardLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    dashboardLinks.forEach(l => l.classList.remove('active'));
+                    
+                    // Add active class to clicked link
+                    link.classList.add('active');
+                    
+                    // Get location from data attribute
+                    const location = link.getAttribute('data-location');
+                    
+                    // Hide all dashboards
+                    document.querySelectorAll('.location-dashboard').forEach(dash => {
+                        dash.classList.remove('active');
+                    });
+                    
+                    // Show selected dashboard
+                    document.getElementById(`${location}-dashboard`).classList.add('active');
+                    
+                    // Update dashboard title if needed
+                    if(location === 'main') {
+                        document.querySelector('.dashboard-title').textContent = 'Water Treatment Monitoring';
+                    }
+                    
+                    // Close dropdown
+                    dashboardDropdown.classList.remove('show');
+                });
             });
             
             // Allow login on Enter key
@@ -882,26 +1432,78 @@
             
             // Simulate data changes for demo purposes
             setInterval(() => {
+                // Main dashboard pH gauge
                 const phGauge = document.querySelector('.gauge-ph .gauge-value');
-                const currentPH = parseFloat(phGauge.textContent);
-                const newPH = (currentPH + (Math.random() * 0.4 - 0.2)).toFixed(1);
-                phGauge.textContent = Math.max(6.5, Math.min(8.5, newPH));
+                if(phGauge) {
+                    const currentPH = parseFloat(phGauge.textContent);
+                    const newPH = (currentPH + (Math.random() * 0.4 - 0.2)).toFixed(1);
+                    phGauge.textContent = Math.max(6.5, Math.min(8.5, newPH));
+                    
+                    // Update gauge arc
+                    const phPercent = ((parseFloat(newPH) / 14) * 100).toFixed(1);
+                    const phFg = document.querySelector('.gauge-ph .gauge-fg');
+                    if(phFg) phFg.style.strokeDasharray = `${phPercent},100`;
+                    
+                    // Update status
+                    const phStatus = document.querySelector('.gauge-ph .gauge-status');
+                    if(phStatus) {
+                        if (newPH < 6.8 || newPH > 8.2) {
+                            phStatus.textContent = newPH < 6.8 ? "Too Acidic" : "Too Alkaline";
+                            phStatus.className = "gauge-status status-critical";
+                        } else if (newPH < 7.0 || newPH > 8.0) {
+                            phStatus.textContent = "Warning";
+                            phStatus.className = "gauge-status status-warning";
+                        } else {
+                            phStatus.textContent = "Optimal";
+                            phStatus.className = "gauge-status status-optimal";
+                        }
+                    }
+                }
                 
-                // Update gauge arc
-                const phPercent = ((parseFloat(newPH) / 14) * 100).toFixed(1);
-                document.querySelector('.gauge-ph .gauge-fg').style.strokeDasharray = `${phPercent},100`;
+                // Kandy ORP gauge
+                const orpGauge = document.querySelector('.gauge-orp .gauge-value');
+                if(orpGauge) {
+                    const currentORP = parseInt(orpGauge.textContent);
+                    const newORP = Math.floor(currentORP + (Math.random() * 40 - 20));
+                    orpGauge.textContent = Math.max(300, Math.min(700, newORP)) + ' mV';
+                    
+                    // Update status
+                    const orpStatus = document.querySelector('.gauge-orp .gauge-status');
+                    if(orpStatus) {
+                        if (newORP < 350 || newORP > 650) {
+                            orpStatus.textContent = newORP < 350 ? "Too Low" : "Too High";
+                            orpStatus.className = "gauge-status status-critical";
+                        } else if (newORP < 400 || newORP > 600) {
+                            orpStatus.textContent = "Warning";
+                            orpStatus.className = "gauge-status status-warning";
+                        } else {
+                            orpStatus.textContent = "Optimal";
+                            orpStatus.className = "gauge-status status-optimal";
+                        }
+                    }
+                }
                 
-                // Update status
-                const phStatus = document.querySelector('.gauge-ph .gauge-status');
-                if (newPH < 6.8 || newPH > 8.2) {
-                    phStatus.textContent = newPH < 6.8 ? "Too Acidic" : "Too Alkaline";
-                    phStatus.className = "gauge-status status-critical";
-                } else if (newPH < 7.0 || newPH > 8.0) {
-                    phStatus.textContent = "Warning";
-                    phStatus.className = "gauge-status status-warning";
-                } else {
-                    phStatus.textContent = "Optimal";
-                    phStatus.className = "gauge-status status-optimal";
+                // Jaffna TDS gauge
+                const tdsGauge = document.querySelector('.gauge-tds .gauge-value');
+                if(tdsGauge && tdsGauge.textContent.includes('mg/L')) {
+                    const currentTDS = parseInt(tdsGauge.textContent);
+                    const newTDS = Math.floor(currentTDS + (Math.random() * 100 - 50));
+                    tdsGauge.textContent = Math.max(800, Math.min(1600, newTDS)) + ' mg/L';
+                    
+                    // Update status
+                    const tdsStatus = document.querySelector('.gauge-tds .gauge-status');
+                    if(tdsStatus) {
+                        if (newTDS > 1500) {
+                            tdsStatus.textContent = "Critical";
+                            tdsStatus.className = "gauge-status status-critical";
+                        } else if (newTDS > 1000) {
+                            tdsStatus.textContent = "High";
+                            tdsStatus.className = "gauge-status status-warning";
+                        } else {
+                            tdsStatus.textContent = "Optimal";
+                            tdsStatus.className = "gauge-status status-optimal";
+                        }
+                    }
                 }
             }, 3000);
             
