@@ -1,106 +1,1604 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Factory X WWTP Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #1f2937;
-      color: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
-    h1 {
-      color: #3b82f6;
-    }
-    #status {
-      margin-top: 10px;
-      padding: 5px 10px;
-      border-radius: 5px;
-      color: #fff;
-      font-weight: bold;
-    }
-    table {
-      border-collapse: collapse;
-      margin-top: 20px;
-      width: 100%;
-      max-width: 600px;
-    }
-    th, td {
-      border: 1px solid #3b82f6;
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background-color: #2563eb;
-    }
-    td {
-      background-color: #1e40af;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory X Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #7209b7;
+            --dark: #f8f9fa;
+            --light: #ffffff;
+            --glass: rgba(255, 255, 255, 0.8);
+            --gauge-bg: rgba(0, 0, 0, 0.05);
+            --vibrant-blue: #4895ef;
+            --vibrant-purple: #b5179e;
+            --vibrant-green: #38b000;
+            --vibrant-orange: #ff7b00;
+            --text-dark: #212529;
+            --text-light: #6c757d;
+            --border: rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: #f8f9fa;
+            min-height: 100vh;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* Login Page Styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-box h2 {
+            margin-bottom: 30px;
+            color: var(--vibrant-blue);
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .login-box input:focus {
+            outline: none;
+            border-color: var(--vibrant-blue);
+            box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.2);
+        }
+
+        .login-btn {
+            background: linear-gradient(to right, var(--vibrant-blue), var(--vibrant-purple));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 149, 239, 0.4);
+        }
+
+        .error-message {
+            color: var(--danger);
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Dashboard Styles (hidden initially) */
+        .dashboard {
+            display: none;
+        }
+        
+        header {
+            background: var(--light);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-dark);
+        }
+        
+        .logo-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(to right, var(--vibrant-blue), var(--vibrant-purple));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(114, 9, 183, 0.2);
+        }
+        
+        .container {
+            padding: 25px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .dashboard-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            background: linear-gradient(to right, var(--vibrant-blue), var(--vibrant-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        
+        .section {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-dark);
+        }
+        
+        .section-title::before {
+            content: "";
+            display: block;
+            width: 5px;
+            height: 20px;
+            background: linear-gradient(to bottom, var(--vibrant-blue), var(--vibrant-purple));
+            border-radius: 3px;
+        }
+        
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .device {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .device::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 0, 0, 0.02), transparent);
+            z-index: 1;
+        }
+        
+        .device:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .device-info {
+            z-index: 2;
+        }
+        
+        .device-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: var(--text-dark);
+        }
+        
+        .device-location {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .status {
+            font-weight: 600;
+            z-index: 2;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .status.connected {
+            background: rgba(76, 201, 240, 0.1);
+            color: #4cc9f0;
+            border: 1px solid rgba(76, 201, 240, 0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        .status.disconnected {
+            background: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(247, 37, 133, 0.3);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 201, 240, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 201, 240, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 201, 240, 0); }
+        }
+        
+        .gauges {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+        
+        .gauge {
+            background: var(--light);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .gauge::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 0, 0, 0.02), transparent);
+        }
+        
+        .gauge:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .gauge h3 {
+            margin-bottom: 15px;
+            font-weight: 500;
+            z-index: 2;
+            position: relative;
+            color: var(--text-dark);
+        }
+        
+        .gauge-value {
+            font-size: 3rem;
+            margin: 15px 0;
+            font-weight: 600;
+            z-index: 2;
+            position: relative;
+            color: var(--text-dark);
+        }
+        
+        .gauge-container {
+            width: 100%;
+            height: 200px;
+            position: relative;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        
+        .gauge-svg {
+            width: 100%;
+            height: 100%;
+            max-width: 300px;
+        }
+        
+        .gauge-bg {
+            fill: none;
+            stroke: var(--gauge-bg);
+            stroke-width: 12;
+        }
+        
+        .gauge-fg {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+            animation: gauge-fill 1.5s ease-out forwards;
+        }
+        
+        .gauge-marker {
+            position: absolute;
+            width: 4px;
+            height: 15px;
+            background: var(--text-light);
+            border-radius: 2px;
+            transform-origin: 50% 100%;
+            left: 50%;
+            bottom: 0;
+            opacity: 0.3;
+        }
+        
+        .gauge-label {
+            position: absolute;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            transform: translateX(-50%);
+        }
+        
+        .gauge-min {
+            left: 10%;
+            bottom: 10px;
+        }
+        
+        .gauge-max {
+            right: 10%;
+            bottom: 10px;
+        }
+        
+        .gauge-optimal {
+            left: 50%;
+            top: 20px;
+            color: var(--vibrant-green);
+            font-weight: 500;
+            transform: translateX(-50%);
+        }
+        
+        .gauge-critical {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: var(--danger);
+            border-radius: 2px;
+            left: 0;
+            top: 20%;
+            opacity: 0.5;
+        }
+        
+        .gauge-status {
+            font-weight: 500;
+            z-index: 2;
+            position: relative;
+            margin-top: 10px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 1rem;
+        }
+        
+        .status-optimal {
+            background: rgba(56, 176, 0, 0.1);
+            color: var(--vibrant-green);
+            border: 1px solid rgba(56, 176, 0, 0.3);
+        }
+        
+        .status-warning {
+            background: rgba(248, 150, 30, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(248, 150, 30, 0.3);
+        }
+        
+        .status-critical {
+            background: rgba(247, 37, 133, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(247, 37, 133, 0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-disconnected {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-light);
+            border: 1px solid var(--border);
+        }
+        
+        @keyframes gauge-fill {
+            from { stroke-dasharray: 0, 100; }
+        }
+        
+        /* Gauge-specific colors */
+        .gauge-ph .gauge-fg {
+            stroke: var(--vibrant-blue);
+        }
+        
+        .gauge-tds .gauge-fg {
+            stroke: var(--vibrant-purple);
+        }
+        
+        .gauge-cod .gauge-fg {
+            stroke: var(--warning);
+        }
+        
+        .gauge-temp .gauge-fg {
+            stroke: var(--danger);
+        }
+        
+        .gauge-orp .gauge-fg {
+            stroke: var(--vibrant-green);
+        }
+        
+        .gauge-bod .gauge-fg {
+            stroke: var(--info);
+        }
+        
+        .gauge-tss .gauge-fg {
+            stroke: var(--vibrant-orange);
+        }
+        
+        .gauge-turbidity .gauge-fg {
+            stroke: #7209b7;
+        }
+        
+        .gauge-conductivity .gauge-fg {
+            stroke: #4cc9f0;
+        }
+        
+        .time-display {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: 400;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        /* Graph Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--vibrant-blue);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        .graph-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .graph {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .graph-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        /* Header Button Styles */
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .logout-btn:hover {
+            background: #d61a6b;
+        }
+
+        .download-btn {
+            background: var(--vibrant-blue);
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #3a56d6;
+        }
+
+        .dashboard-btn {
+            background: var(--vibrant-purple);
+            color: white;
+            position: relative;
+        }
+
+        .dashboard-btn:hover {
+            background: #8a12a1;
+        }
+
+        /* Dashboard Dropdown */
+        .dashboard-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 10px 0;
+            min-width: 180px;
+            z-index: 20;
+            display: none;
+        }
+
+        .dashboard-dropdown.show {
+            display: block;
+        }
+
+        .dashboard-dropdown a {
+            display: block;
+            padding: 8px 15px;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .dashboard-dropdown a:hover {
+            background: rgba(67, 97, 238, 0.1);
+            color: var(--primary);
+        }
+
+        .dashboard-dropdown a.active {
+            background: rgba(67, 97, 238, 0.2);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Location-specific dashboard styles */
+        .location-dashboard {
+            display: none;
+        }
+
+        .location-dashboard.active {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .device-grid, .gauges {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .gauge {
+                height: auto;
+                min-height: 350px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .graph-container {
+                grid-template-columns: 1fr;
+            }
+
+            .header-buttons {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 5px;
+            }
+
+            .header-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>Factory X WWTP Dashboard</h1>
-  <div id="status">Connecting...</div>
+    <!-- Login Page -->
+    <div class="login-container" id="login-page">
+        <div class="login-box">
+            <h2>Factory X Dashboard</h2>
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button class="login-btn" id="login-btn">Login</button>
+            <div class="error-message" id="error-message">Invalid username or password</div>
+        </div>
+    </div>
 
-  <table id="sensorTable">
-    <thead>
-      <tr>
-        <th>Sensor</th>
-        <th>Value</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Data rows will go here -->
-    </tbody>
-  </table>
+    <!-- Dashboard (hidden initially) -->
+    <div class="dashboard" id="dashboard">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                        <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                </div>
+                <span>Factory X</span>
+            </div>
+            <div class="header-buttons">
+                <div class="time-display" id="current-time">Loading...</div>
+                <button class="header-btn download-btn" id="download-btn">Download Data</button>
+                <div style="position: relative;">
+                    <button class="header-btn dashboard-btn" id="dashboard-btn">Dashboard</button>
+                    <div class="dashboard-dropdown" id="dashboard-dropdown">
+                        <a href="#" class="active" data-location="main">Main Dashboard</a>
+                        <a href="#" data-location="kandy">Kandy</a>
+                        <a href="#" data-location="colombo">Colombo</a>
+                        <a href="#" data-location="jaffna">Jaffna</a>
+                    </div>
+                </div>
+                <button class="header-btn logout-btn" id="logout-btn">Logout</button>
+            </div>
+        </header>
+        
+        <div class="container">
+            <!-- Main Dashboard -->
+            <div class="location-dashboard active" id="main-dashboard">
+                <h1 class="dashboard-title">Water Treatment Monitoring</h1>
+                
+                <!-- Device Status Grid -->
+                <div class="section">
+                    <h2 class="section-title">Device Status</h2>
+                    <div class="device-grid">
+                        <div class="device" data-device="ph">
+                            <div class="device-info">
+                                <div class="device-name">pH Device</div>
+                                <div class="device-location">WWTP Horana</div>
+                            </div>
+                            <span class="status connected">7.7</span>
+                        </div>
+                        <div class="device" data-device="tss">
+                            <div class="device-info">
+                                <div class="device-name">TSS Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="cod">
+                            <div class="device-info">
+                                <div class="device-name">COD Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="conductivity">
+                            <div class="device-info">
+                                <div class="device-name">Conductivity Device</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="bod">
+                            <div class="device-info">
+                                <div class="device-name">BOD Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="temp">
+                            <div class="device-info">
+                                <div class="device-name">Temp Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="turbidity">
+                            <div class="device-info">
+                                <div class="device-name">Turbidity Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="flow">
+                            <div class="device-info">
+                                <div class="device-name">Flow Meter</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="orp">
+                            <div class="device-info">
+                                <div class="device-name">ORP Device</div>
+                                <div class="device-location">WWTP Horana</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                        <div class="device" data-device="tds">
+                            <div class="device-info">
+                                <div class="device-name">TDS Device</div>
+                                <div class="device-location">RO in Galle</div>
+                            </div>
+                            <span class="status disconnected">Disconnected</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gauges -->
+                <div class="section">
+                    <h2 class="section-title">Key Metrics</h2>
+                    <div class="gauges">
+                        <div class="gauge gauge-ph">
+                            <h3>pH Level (WWTP Horana)</h3>
+                            <div class="gauge-value">7.7</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="77,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">14</div>
+                                <div class="gauge-optimal">7-8</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-tds">
+                            <h3>TDS Level (RO in Galle)</h3>
+                            <div class="gauge-value">0</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">1000</div>
+                                <div class="gauge-optimal">0-500</div>
+                            </div>
+                            <div class="gauge-status status-disconnected">Disconnected</div>
+                        </div>
+                        <div class="gauge gauge-cod">
+                            <h3>COD Level (WWTP Jaffna)</h3>
+                            <div class="gauge-value">0</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">500</div>
+                                <div class="gauge-optimal">0-50</div>
+                            </div>
+                            <div class="gauge-status status-disconnected">Disconnected</div>
+                        </div>
+                        <div class="gauge gauge-temp">
+                            <h3>Temperature (WWTP Jaffna)</h3>
+                            <div class="gauge-value">0°C</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">100</div>
+                                <div class="gauge-optimal">15-25</div>
+                            </div>
+                            <div class="gauge-status status-disconnected">Disconnected</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Kandy Dashboard -->
+            <div class="location-dashboard" id="kandy-dashboard">
+                <h1 class="dashboard-title">Kandy Water Treatment</h1>
+                
+                <!-- Device Status Grid -->
+                <div class="section">
+                    <h2 class="section-title">Device Status</h2>
+                    <div class="device-grid">
+                        <div class="device" data-device="ph">
+                            <div class="device-info">
+                                <div class="device-name">pH Device</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status connected">7.2</span>
+                        </div>
+                        <div class="device" data-device="orp">
+                            <div class="device-info">
+                                <div class="device-name">ORP Device</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status connected">450 mV</span>
+                        </div>
+                        <div class="device" data-device="conductivity">
+                            <div class="device-info">
+                                <div class="device-name">Conductivity Device</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status connected">250 µS/cm</span>
+                        </div>
+                        <div class="device" data-device="flow">
+                            <div class="device-info">
+                                <div class="device-name">Flow Meter</div>
+                                <div class="device-location">RO in Kandy</div>
+                            </div>
+                            <span class="status connected">120 L/min</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gauges -->
+                <div class="section">
+                    <h2 class="section-title">Key Metrics</h2>
+                    <div class="gauges">
+                        <div class="gauge gauge-ph">
+                            <h3>pH Level (RO in Kandy)</h3>
+                            <div class="gauge-value">7.2</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="72,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">14</div>
+                                <div class="gauge-optimal">6.5-8.5</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-orp">
+                            <h3>ORP Level (RO in Kandy)</h3>
+                            <div class="gauge-value">450 mV</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="45,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">-1000</div>
+                                <div class="gauge-max">1000</div>
+                                <div class="gauge-optimal">400-600</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-conductivity">
+                            <h3>Conductivity (RO in Kandy)</h3>
+                            <div class="gauge-value">250 µS/cm</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="25,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">1000</div>
+                                <div class="gauge-optimal">0-500</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Colombo Dashboard -->
+            <div class="location-dashboard" id="colombo-dashboard">
+                <h1 class="dashboard-title">Colombo Water Treatment</h1>
+                
+                <!-- Device Status Grid -->
+                <div class="section">
+                    <h2 class="section-title">Device Status</h2>
+                    <div class="device-grid">
+                        <div class="device" data-device="cod">
+                            <div class="device-info">
+                                <div class="device-name">COD Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">35 mg/L</span>
+                        </div>
+                        <div class="device" data-device="bod">
+                            <div class="device-info">
+                                <div class="device-name">BOD Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">12 mg/L</span>
+                        </div>
+                        <div class="device" data-device="temp">
+                            <div class="device-info">
+                                <div class="device-name">Temp Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">22°C</span>
+                        </div>
+                        <div class="device" data-device="turbidity">
+                            <div class="device-info">
+                                <div class="device-name">Turbidity Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">5 NTU</span>
+                        </div>
+                        <div class="device" data-device="tss">
+                            <div class="device-info">
+                                <div class="device-name">TSS Device</div>
+                                <div class="device-location">WWTP Colombo</div>
+                            </div>
+                            <span class="status connected">18 mg/L</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gauges -->
+                <div class="section">
+                    <h2 class="section-title">Key Metrics</h2>
+                    <div class="gauges">
+                        <div class="gauge gauge-cod">
+                            <h3>COD Level (WWTP Colombo)</h3>
+                            <div class="gauge-value">35 mg/L</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="35,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">500</div>
+                                <div class="gauge-optimal">0-50</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-bod">
+                            <h3>BOD Level (WWTP Colombo)</h3>
+                            <div class="gauge-value">12 mg/L</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="12,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">300</div>
+                                <div class="gauge-optimal">0-30</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-temp">
+                            <h3>Temperature (WWTP Colombo)</h3>
+                            <div class="gauge-value">22°C</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="22,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">100</div>
+                                <div class="gauge-optimal">15-25</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-turbidity">
+                            <h3>Turbidity (WWTP Colombo)</h3>
+                            <div class="gauge-value">5 NTU</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="5,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">100</div>
+                                <div class="gauge-optimal">0-10</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-tss">
+                            <h3>TSS Level (WWTP Colombo)</h3>
+                            <div class="gauge-value">18 mg/L</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="18,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">500</div>
+                                <div class="gauge-optimal">0-30</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Jaffna Dashboard -->
+            <div class="location-dashboard" id="jaffna-dashboard">
+                <h1 class="dashboard-title">Jaffna Water Treatment</h1>
+                
+                <!-- Device Status Grid -->
+                <div class="section">
+                    <h2 class="section-title">Device Status</h2>
+                    <div class="device-grid">
+                        <div class="device" data-device="conductivity">
+                            <div class="device-info">
+                                <div class="device-name">Conductivity Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status connected">1800 µS/cm</span>
+                        </div>
+                        <div class="device" data-device="tds">
+                            <div class="device-info">
+                                <div class="device-name">TDS Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status connected">1200 mg/L</span>
+                        </div>
+                        <div class="device" data-device="ph">
+                            <div class="device-info">
+                                <div class="device-name">pH Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status connected">8.1</span>
+                        </div>
+                        <div class="device" data-device="temp">
+                            <div class="device-info">
+                                <div class="device-name">Temp Device</div>
+                                <div class="device-location">WWTP Jaffna</div>
+                            </div>
+                            <span class="status connected">28°C</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gauges -->
+                <div class="section">
+                    <h2 class="section-title">Key Metrics</h2>
+                    <div class="gauges">
+                        <div class="gauge gauge-conductivity">
+                            <h3>Conductivity (WWTP Jaffna)</h3>
+                            <div class="gauge-value">1800 µS/cm</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="90,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">2000</div>
+                                <div class="gauge-optimal">0-1000</div>
+                            </div>
+                            <div class="gauge-status status-warning">High</div>
+                        </div>
+                        <div class="gauge gauge-tds">
+                            <h3>TDS Level (WWTP Jaffna)</h3>
+                            <div class="gauge-value">1200 mg/L</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="60,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">2000</div>
+                                <div class="gauge-optimal">0-500</div>
+                            </div>
+                            <div class="gauge-status status-warning">High</div>
+                        </div>
+                        <div class="gauge gauge-ph">
+                            <h3>pH Level (WWTP Jaffna)</h3>
+                            <div class="gauge-value">8.1</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="81,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">14</div>
+                                <div class="gauge-optimal">6.5-8.5</div>
+                            </div>
+                            <div class="gauge-status status-optimal">Optimal</div>
+                        </div>
+                        <div class="gauge gauge-temp">
+                            <h3>Temperature (WWTP Jaffna)</h3>
+                            <div class="gauge-value">28°C</div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 100 50">
+                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
+                                    <path class="gauge-fg" stroke-dasharray="28,100" d="M10 50 A40 40 0 0 1 90 50" />
+                                </svg>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
+                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
+                                <div class="gauge-min">0</div>
+                                <div class="gauge-max">100</div>
+                                <div class="gauge-optimal">15-25</div>
+                            </div>
+                            <div class="gauge-status status-warning">High</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <script>
-    const API_URL = "https://cod.prudex.net/latest"; // Change to your HTTPS backend
-    const statusDiv = document.getElementById("status");
+    <!-- Graph Modal -->
+    <div class="modal" id="graph-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-device-name">Device Data</h2>
+                <button class="close-modal" id="close-modal">&times;</button>
+            </div>
+            <div class="graph-container">
+                <div class="graph">
+                    <h3 class="graph-title">Last 1 Hour</h3>
+                    <canvas id="hour-chart"></canvas>
+                </div>
+                <div class="graph">
+                    <h3 class="graph-title">Last 24 Hours</h3>
+                    <canvas id="day-chart"></canvas>
+                </div>
+                <div class="graph">
+                    <h3 class="graph-title">Last 30 Days</h3>
+                    <canvas id="month-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    async function fetchData() {
-      try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error("Network response was not ok");
-        const data = await response.json();
-
-        // Connection successful
-        statusDiv.textContent = "Connected to backend";
-        statusDiv.style.backgroundColor = "green";
-
-        const tbody = document.querySelector("#sensorTable tbody");
-        tbody.innerHTML = ""; // clear previous rows
-
-        // Add device row
-        const deviceRow = document.createElement("tr");
-        deviceRow.innerHTML = `<td colspan="2"><strong>Device: ${data.device}</strong></td>`;
-        tbody.appendChild(deviceRow);
-
-        // Add sensor rows
-        for (let key in data) {
-          if (key !== "device" && key !== "status") {
-            const row = document.createElement("tr");
-            row.innerHTML = `<td>Sensor ${key}</td><td>${data[key]}</td>`;
-            tbody.appendChild(row);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        statusDiv.textContent = "Disconnected from backend";
-        statusDiv.style.backgroundColor = "red";
-      }
-    }
-
-    // Fetch every 5 seconds
-    fetchData();
-    setInterval(fetchData, 5000);
-  </script>
+    <script>
+        // Login functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginPage = document.getElementById('login-page');
+            const dashboard = document.getElementById('dashboard');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const errorMessage = document.getElementById('error-message');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const downloadBtn = document.getElementById('download-btn');
+            const dashboardBtn = document.getElementById('dashboard-btn');
+            const dashboardDropdown = document.getElementById('dashboard-dropdown');
+            
+            // Check if user is already logged in (for page refresh)
+            if(localStorage.getItem('loggedIn') === 'true') {
+                loginPage.style.display = 'none';
+                dashboard.style.display = 'block';
+            }
+            
+            // Login button click
+            loginBtn.addEventListener('click', () => {
+                if(usernameInput.value === 'admin' && passwordInput.value === '2025') {
+                    // Successful login
+                    loginPage.style.display = 'none';
+                    dashboard.style.display = 'block';
+                    errorMessage.style.display = 'none';
+                    localStorage.setItem('loggedIn', 'true');
+                } else {
+                    // Failed login
+                    errorMessage.style.display = 'block';
+                }
+            });
+            
+            // Logout button click
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('loggedIn');
+                dashboard.style.display = 'none';
+                loginPage.style.display = 'flex';
+                usernameInput.value = '';
+                passwordInput.value = '';
+            });
+            
+            // Download button click
+            downloadBtn.addEventListener('click', () => {
+                alert('Data download functionality would be implemented here.\nThis would export the current dashboard data in CSV/Excel format.');
+            });
+            
+            // Dashboard dropdown toggle
+            dashboardBtn.addEventListener('click', () => {
+                dashboardDropdown.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            window.addEventListener('click', (e) => {
+                if (!e.target.matches('#dashboard-btn')) {
+                    if (dashboardDropdown.classList.contains('show')) {
+                        dashboardDropdown.classList.remove('show');
+                    }
+                }
+            });
+            
+            // Dashboard selection
+            const dashboardLinks = document.querySelectorAll('.dashboard-dropdown a');
+            dashboardLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    dashboardLinks.forEach(l => l.classList.remove('active'));
+                    
+                    // Add active class to clicked link
+                    link.classList.add('active');
+                    
+                    // Get location from data attribute
+                    const location = link.getAttribute('data-location');
+                    
+                    // Hide all dashboards
+                    document.querySelectorAll('.location-dashboard').forEach(dash => {
+                        dash.classList.remove('active');
+                    });
+                    
+                    // Show selected dashboard
+                    document.getElementById(`${location}-dashboard`).classList.add('active');
+                    
+                    // Update dashboard title if needed
+                    if(location === 'main') {
+                        document.querySelector('.dashboard-title').textContent = 'Water Treatment Monitoring';
+                    }
+                    
+                    // Close dropdown
+                    dashboardDropdown.classList.remove('show');
+                });
+            });
+            
+            // Allow login on Enter key
+            passwordInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') {
+                    loginBtn.click();
+                }
+            });
+            
+            // Update time display
+            function updateTime() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                const dateString = now.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('current-time').innerHTML = `${dateString} | ${timeString}`;
+            }
+            
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Animate gauges on load
+            const gauges = document.querySelectorAll('.gauge-fg');
+            gauges.forEach(gauge => {
+                const value = gauge.getAttribute('stroke-dasharray').split(',')[0];
+                gauge.style.strokeDasharray = `0,100`;
+                setTimeout(() => {
+                    gauge.style.strokeDasharray = `${value},100`;
+                }, 100);
+            });
+            
+            // Simulate data changes for demo purposes
+            setInterval(() => {
+                // Main dashboard pH gauge
+                const phGauge = document.querySelector('.gauge-ph .gauge-value');
+                if(phGauge) {
+                    const currentPH = parseFloat(phGauge.textContent);
+                    const newPH = (currentPH + (Math.random() * 0.4 - 0.2)).toFixed(1);
+                    phGauge.textContent = Math.max(6.5, Math.min(8.5, newPH));
+                    
+                    // Update gauge arc
+                    const phPercent = ((parseFloat(newPH) / 14) * 100).toFixed(1);
+                    const phFg = document.querySelector('.gauge-ph .gauge-fg');
+                    if(phFg) phFg.style.strokeDasharray = `${phPercent},100`;
+                    
+                    // Update status
+                    const phStatus = document.querySelector('.gauge-ph .gauge-status');
+                    if(phStatus) {
+                        if (newPH < 6.8 || newPH > 8.2) {
+                            phStatus.textContent = newPH < 6.8 ? "Too Acidic" : "Too Alkaline";
+                            phStatus.className = "gauge-status status-critical";
+                        } else if (newPH < 7.0 || newPH > 8.0) {
+                            phStatus.textContent = "Warning";
+                            phStatus.className = "gauge-status status-warning";
+                        } else {
+                            phStatus.textContent = "Optimal";
+                            phStatus.className = "gauge-status status-optimal";
+                        }
+                    }
+                }
+                
+                // Kandy ORP gauge
+                const orpGauge = document.querySelector('.gauge-orp .gauge-value');
+                if(orpGauge) {
+                    const currentORP = parseInt(orpGauge.textContent);
+                    const newORP = Math.floor(currentORP + (Math.random() * 40 - 20));
+                    orpGauge.textContent = Math.max(300, Math.min(700, newORP)) + ' mV';
+                    
+                    // Update status
+                    const orpStatus = document.querySelector('.gauge-orp .gauge-status');
+                    if(orpStatus) {
+                        if (newORP < 350 || newORP > 650) {
+                            orpStatus.textContent = newORP < 350 ? "Too Low" : "Too High";
+                            orpStatus.className = "gauge-status status-critical";
+                        } else if (newORP < 400 || newORP > 600) {
+                            orpStatus.textContent = "Warning";
+                            orpStatus.className = "gauge-status status-warning";
+                        } else {
+                            orpStatus.textContent = "Optimal";
+                            orpStatus.className = "gauge-status status-optimal";
+                        }
+                    }
+                }
+                
+                // Jaffna TDS gauge
+                const tdsGauge = document.querySelector('.gauge-tds .gauge-value');
+                if(tdsGauge && tdsGauge.textContent.includes('mg/L')) {
+                    const currentTDS = parseInt(tdsGauge.textContent);
+                    const newTDS = Math.floor(currentTDS + (Math.random() * 100 - 50));
+                    tdsGauge.textContent = Math.max(800, Math.min(1600, newTDS)) + ' mg/L';
+                    
+                    // Update status
+                    const tdsStatus = document.querySelector('.gauge-tds .gauge-status');
+                    if(tdsStatus) {
+                        if (newTDS > 1500) {
+                            tdsStatus.textContent = "Critical";
+                            tdsStatus.className = "gauge-status status-critical";
+                        } else if (newTDS > 1000) {
+                            tdsStatus.textContent = "High";
+                            tdsStatus.className = "gauge-status status-warning";
+                        } else {
+                            tdsStatus.textContent = "Optimal";
+                            tdsStatus.className = "gauge-status status-optimal";
+                        }
+                    }
+                }
+            }, 3000);
+            
+            // Device click handler for showing graphs
+            const devices = document.querySelectorAll('.device');
+            const modal = document.getElementById('graph-modal');
+            const closeModal = document.getElementById('close-modal');
+            const modalDeviceName = document.getElementById('modal-device-name');
+            
+            devices.forEach(device => {
+                device.addEventListener('click', () => {
+                    const deviceName = device.querySelector('.device-name').textContent;
+                    const deviceLocation = device.querySelector('.device-location').textContent;
+                    modalDeviceName.textContent = `${deviceName} - ${deviceLocation}`;
+                    
+                    // Show modal
+                    modal.style.display = 'flex';
+                    
+                    // Generate random data for charts
+                    const hourData = generateRandomData(12, 0, 14);
+                    const dayData = generateRandomData(24, 0, 14);
+                    const monthData = generateRandomData(30, 0, 14);
+                    
+                    // Create charts
+                    createChart('hour-chart', 'Last 1 Hour', hourData.labels, hourData.values);
+                    createChart('day-chart', 'Last 24 Hours', dayData.labels, dayData.values);
+                    createChart('month-chart', 'Last 30 Days', monthData.labels, monthData.values);
+                });
+            });
+            
+            // Close modal
+            closeModal.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if(e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+            
+            // Function to generate random data for charts
+            function generateRandomData(count, min, max) {
+                const labels = [];
+                const values = [];
+                
+                for(let i = 0; i < count; i++) {
+                    labels.push(i);
+                    values.push(Math.random() * (max - min) + min);
+                }
+                
+                return { labels, values };
+            }
+            
+            // Function to create a chart
+            function createChart(canvasId, label, labels, data) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                
+                // Destroy previous chart if it exists
+                if(window[canvasId + 'Chart']) {
+                    window[canvasId + 'Chart'].destroy();
+                }
+                
+                // Create new chart
+                window[canvasId + 'Chart'] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: data,
+                            borderColor: '#4361ee',
+                            backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
-
-
