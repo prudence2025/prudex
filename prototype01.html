@@ -3,1439 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Factory X Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Factory X Main Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4361ee;
-            --secondary: #3a0ca3;
-            --success: #4cc9f0;
-            --danger: #f72585;
-            --warning: #f8961e;
-            --info: #7209b7;
-            --dark: #f8f9fa;
-            --light: #ffffff;
-            --glass: rgba(255, 255, 255, 0.8);
-            --gauge-bg: rgba(0, 0, 0, 0.05);
-            --vibrant-blue: #4895ef;
-            --vibrant-purple: #b5179e;
-            --vibrant-green: #38b000;
-            --vibrant-orange: #ff7b00;
-            --text-dark: #212529;
-            --text-light: #6c757d;
-            --border: rgba(0, 0, 0, 0.1);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-        
         body {
-            background: #f8f9fa;
-            min-height: 100vh;
-            color: var(--text-dark);
-            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #2c2c2c; /* Darker background for the entire page */
+            color: #e0e0e0;
         }
 
-        /* Login Page Styles */
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-
-        .login-box {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .login-box h2 {
-            margin-bottom: 30px;
-            color: var(--vibrant-blue);
-        }
-
-        .login-box input {
-            width: 100%;
-            padding: 12px 15px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .login-box input:focus {
-            outline: none;
-            border-color: var(--vibrant-blue);
-            box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.2);
-        }
-
-        .login-btn {
-            background: linear-gradient(to right, var(--vibrant-blue), var(--vibrant-purple));
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(72, 149, 239, 0.4);
-        }
-
-        .error-message {
-            color: var(--danger);
-            margin-top: 10px;
-            font-size: 14px;
-            display: none;
-        }
-
-        /* Dashboard Styles (hidden initially) */
-        .dashboard {
-            display: none;
-        }
-        
-        header {
-            background: var(--light);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            font-size: 1.5rem;
-            font-weight: 600;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        /* Custom CSS for the semi-circular gauge visuals */
+        .gauge-display {
             position: relative;
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-dark);
-        }
-        
-        .logo-icon {
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(to right, var(--vibrant-blue), var(--vibrant-purple));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 10px rgba(114, 9, 183, 0.2);
-        }
-        
-        .container {
-            padding: 25px;
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        
-        .dashboard-title {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            font-weight: 600;
-            background: linear-gradient(to right, var(--vibrant-blue), var(--vibrant-purple));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            display: inline-block;
-        }
-        
-        .section {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .section:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-        
-        .section-title {
-            font-size: 1.3rem;
-            margin-bottom: 20px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-dark);
-        }
-        
-        .section-title::before {
-            content: "";
-            display: block;
-            width: 5px;
-            height: 20px;
-            background: linear-gradient(to bottom, var(--vibrant-blue), var(--vibrant-purple));
-            border-radius: 3px;
-        }
-        
-        .device-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-        
-        .device {
-            background: var(--light);
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        
-        .device::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, transparent, rgba(0, 0, 0, 0.02), transparent);
-            z-index: 1;
-        }
-        
-        .device:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        .device-info {
-            z-index: 2;
-        }
-        
-        .device-name {
-            font-weight: 500;
-            margin-bottom: 5px;
-            color: var(--text-dark);
-        }
-        
-        .device-location {
-            font-size: 0.8rem;
-            color: var(--text-light);
-        }
-        
-        .status {
-            font-weight: 600;
-            z-index: 2;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-        }
-        
-        .status.connected {
-            background: rgba(76, 201, 240, 0.1);
-            color: #4cc9f0;
-            border: 1px solid rgba(76, 201, 240, 0.3);
-            animation: pulse 2s infinite;
-        }
-        
-        .status.disconnected {
-            background: rgba(247, 37, 133, 0.1);
-            color: var(--danger);
-            border: 1px solid rgba(247, 37, 133, 0.3);
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(76, 201, 240, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(76, 201, 240, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(76, 201, 240, 0); }
-        }
-        
-        .gauges {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 30px;
-        }
-        
-        .gauge {
-            background: var(--light);
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            height: 350px;
+            height: 150px; /* Adjust height as needed for proportion */
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        
-        .gauge::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, transparent, rgba(0, 0, 0, 0.02), transparent);
-        }
-        
-        .gauge:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        .gauge h3 {
-            margin-bottom: 15px;
-            font-weight: 500;
-            z-index: 2;
-            position: relative;
-            color: var(--text-dark);
-        }
-        
-        .gauge-value {
-            font-size: 3rem;
-            margin: 15px 0;
-            font-weight: 600;
-            z-index: 2;
-            position: relative;
-            color: var(--text-dark);
-        }
-        
-        .gauge-container {
-            width: 100%;
-            height: 200px;
-            position: relative;
-            margin: 20px 0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-        }
-        
-        .gauge-svg {
-            width: 100%;
-            height: 100%;
-            max-width: 300px;
-        }
-        
-        .gauge-bg {
-            fill: none;
-            stroke: var(--gauge-bg);
-            stroke-width: 12;
-        }
-        
-        .gauge-fg {
-            fill: none;
-            stroke-width: 12;
-            stroke-linecap: round;
-            animation: gauge-fill 1.5s ease-out forwards;
-        }
-        
-        .gauge-marker {
-            position: absolute;
-            width: 4px;
-            height: 15px;
-            background: var(--text-light);
-            border-radius: 2px;
-            transform-origin: 50% 100%;
-            left: 50%;
-            bottom: 0;
-            opacity: 0.3;
-        }
-        
-        .gauge-label {
-            position: absolute;
-            font-size: 0.8rem;
-            color: var(--text-light);
-            transform: translateX(-50%);
-        }
-        
-        .gauge-min {
-            left: 10%;
-            bottom: 10px;
-        }
-        
-        .gauge-max {
-            right: 10%;
-            bottom: 10px;
-        }
-        
-        .gauge-optimal {
-            left: 50%;
-            top: 20px;
-            color: var(--vibrant-green);
-            font-weight: 500;
-            transform: translateX(-50%);
-        }
-        
-        .gauge-critical {
-            position: absolute;
-            width: 100%;
-            height: 4px;
-            background: var(--danger);
-            border-radius: 2px;
-            left: 0;
-            top: 20%;
-            opacity: 0.5;
-        }
-        
-        .gauge-status {
-            font-weight: 500;
-            z-index: 2;
-            position: relative;
-            margin-top: 10px;
-            padding: 8px 15px;
-            border-radius: 20px;
-            display: inline-block;
-            font-size: 1rem;
-        }
-        
-        .status-optimal {
-            background: rgba(56, 176, 0, 0.1);
-            color: var(--vibrant-green);
-            border: 1px solid rgba(56, 176, 0, 0.3);
-        }
-        
-        .status-warning {
-            background: rgba(248, 150, 30, 0.1);
-            color: var(--warning);
-            border: 1px solid rgba(248, 150, 30, 0.3);
-        }
-        
-        .status-critical {
-            background: rgba(247, 37, 133, 0.1);
-            color: var(--danger);
-            border: 1px solid rgba(247, 37, 133, 0.3);
-            animation: pulse 2s infinite;
-        }
-        
-        .status-disconnected {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--text-light);
-            border: 1px solid var(--border);
-        }
-        
-        @keyframes gauge-fill {
-            from { stroke-dasharray: 0, 100; }
-        }
-        
-        /* Gauge-specific colors */
-        .gauge-ph .gauge-fg {
-            stroke: var(--vibrant-blue);
-        }
-        
-        .gauge-tds .gauge-fg {
-            stroke: var(--vibrant-purple);
-        }
-        
-        .gauge-cod .gauge-fg {
-            stroke: var(--warning);
-        }
-        
-        .gauge-temp .gauge-fg {
-            stroke: var(--danger);
-        }
-        
-        .gauge-orp .gauge-fg {
-            stroke: var(--vibrant-green);
-        }
-        
-        .gauge-bod .gauge-fg {
-            stroke: var(--info);
-        }
-        
-        .gauge-tss .gauge-fg {
-            stroke: var(--vibrant-orange);
-        }
-        
-        .gauge-turbidity .gauge-fg {
-            stroke: #7209b7;
-        }
-        
-        .gauge-conductivity .gauge-fg {
-            stroke: #4cc9f0;
-        }
-        
-        .time-display {
-            font-size: 0.9rem;
-            color: var(--text-light);
-            font-weight: 400;
-            background: rgba(0, 0, 0, 0.05);
-            padding: 5px 10px;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-        }
-
-        /* Graph Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 1200px;
-            max-height: 90vh;
-            overflow-y: auto;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            color: var(--vibrant-blue);
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-light);
-        }
-
-        .graph-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-            margin-top: 20px;
-        }
-
-        .graph {
-            background: white;
+            justify-content: flex-end; /* Align content to the bottom of the container */
+            background-color: #3f3f46; /* Panel background */
             border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--border);
+            padding: 16px;
+            box-sizing: border-box;
+            overflow: hidden; /* Hide parts of the gauge elements */
+            margin-bottom: 20px; /* Space between rows */
         }
 
-        .graph-title {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            color: var(--text-dark);
-            font-weight: 500;
-        }
-
-        /* Header Button Styles */
-        .header-buttons {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-btn {
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            font-weight: 500;
-        }
-
-        .logout-btn {
-            background: var(--danger);
-            color: white;
-        }
-
-        .logout-btn:hover {
-            background: #d61a6b;
-        }
-
-        .download-btn {
-            background: var(--vibrant-blue);
-            color: white;
-        }
-
-        .download-btn:hover {
-            background: #3a56d6;
-        }
-
-        .dashboard-btn {
-            background: var(--vibrant-purple);
-            color: white;
+        .gauge-arc-container {
             position: relative;
+            width: 180px; /* Diameter of the full circle */
+            height: 90px; /* Half of the diameter for semi-circle effect */
+            overflow: hidden;
+            border-bottom-left-radius: 90px;
+            border-bottom-right-radius: 90px;
+            margin-bottom: 10px;
         }
 
-        .dashboard-btn:hover {
-            background: #8a12a1;
-        }
-
-        /* Dashboard Dropdown */
-        .dashboard-dropdown {
+        .gauge-arc-bg {
             position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            padding: 10px 0;
-            min-width: 180px;
-            z-index: 20;
-            display: none;
+            top: 0;
+            left: 0;
+            width: 180px;
+            height: 180px; /* Full circle height */
+            border-radius: 50%;
+            border: 8px solid #555; /* Base arc color */
+            box-sizing: border-box;
+            transform: translateY(-50%); /* Move up to show bottom half */
         }
 
-        .dashboard-dropdown.show {
-            display: block;
+        .gauge-needle {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform-origin: bottom center;
+            width: 4px;
+            height: 70px; /* Length of the needle */
+            background-color: #4CAF50; /* Green needle color */
+            border-radius: 2px 2px 0 0;
+            transform: translateX(-50%) rotate(-90deg); /* Initial position (min) */
+            transition: transform 0.5s ease-out; /* Smooth transition */
+            z-index: 5;
         }
 
-        .dashboard-dropdown a {
-            display: block;
-            padding: 8px 15px;
-            color: var(--text-dark);
-            text-decoration: none;
-            transition: all 0.2s;
+        .gauge-center-dot {
+            position: absolute;
+            bottom: -5px; /* Adjust to cover needle pivot */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            background-color: #333; /* Dark dot to match background */
+            border-radius: 50%;
+            z-index: 6;
         }
 
-        .dashboard-dropdown a:hover {
-            background: rgba(67, 97, 238, 0.1);
-            color: var(--primary);
+        .gauge-value-display {
+            position: absolute;
+            top: 50%; /* Center vertically within the arc space */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 7;
         }
 
-        .dashboard-dropdown a.active {
-            background: rgba(67, 97, 238, 0.2);
-            color: var(--primary);
-            font-weight: 500;
-        }
-
-        /* Location-specific dashboard styles */
-        .location-dashboard {
-            display: none;
-        }
-
-        .location-dashboard.active {
-            display: block;
-        }
-        
-        @media (max-width: 768px) {
-            .device-grid, .gauges {
-                grid-template-columns: 1fr;
-            }
-            
-            .container {
-                padding: 15px;
-            }
-            
-            .section {
-                padding: 20px;
-            }
-            
-            .gauge {
-                height: auto;
-                min-height: 350px;
-            }
-
-            .modal-content {
-                width: 95%;
-                padding: 20px;
-            }
-
-            .graph-container {
-                grid-template-columns: 1fr;
-            }
-
-            .header-buttons {
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 5px;
-            }
-
-            .header-btn {
-                padding: 6px 12px;
-                font-size: 0.8rem;
-            }
+        .gauge-min-max-labels {
+            position: absolute;
+            bottom: 0;
+            width: calc(100% - 32px); /* Adjust for padding */
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem; /* text-xs */
+            color: #aaa;
+            z-index: 8;
+            padding-bottom: 5px; /* Space from the very bottom of the panel */
         }
     </style>
 </head>
-<body>
-    <!-- Login Page -->
-    <div class="login-container" id="login-page">
-        <div class="login-box">
-            <h2>Factory X Dashboard</h2>
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button class="login-btn" id="login-btn">Login</button>
-            <div class="error-message" id="error-message">Invalid username or password</div>
-        </div>
-    </div>
+<body class="min-h-screen flex flex-col">
 
-    <!-- Dashboard (hidden initially) -->
-    <div class="dashboard" id="dashboard">
-        <header>
-            <div class="logo">
-                <div class="logo-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                        <polyline points="13 2 13 9 20 9"></polyline>
-                    </svg>
-                </div>
-                <span>Factory X</span>
-            </div>
-            <div class="header-buttons">
-                <div class="time-display" id="current-time">Loading...</div>
-                <button class="header-btn download-btn" id="download-btn">Download Data</button>
-                <div style="position: relative;">
-                    <button class="header-btn dashboard-btn" id="dashboard-btn">Dashboard</button>
-                    <div class="dashboard-dropdown" id="dashboard-dropdown">
-                        <a href="#" class="active" data-location="main">Main Dashboard</a>
-                        <a href="#" data-location="kandy">Kandy</a>
-                        <a href="#" data-location="colombo">Colombo</a>
-                        <a href="#" data-location="jaffna">Jaffna</a>
-                    </div>
-                </div>
-                <button class="header-btn logout-btn" id="logout-btn">Logout</button>
-            </div>
-        </header>
-        
-        <div class="container">
-            <!-- Main Dashboard -->
-            <div class="location-dashboard active" id="main-dashboard">
-                <h1 class="dashboard-title">Water Treatment Monitoring</h1>
-                
-                <!-- Device Status Grid -->
-                <div class="section">
-                    <h2 class="section-title">Device Status</h2>
-                    <div class="device-grid">
-                        <div class="device" data-device="ph">
-                            <div class="device-info">
-                                <div class="device-name">pH Device</div>
-                                <div class="device-location">WWTP Horana</div>
-                            </div>
-                            <span class="status connected">7.7</span>
-                        </div>
-                        <div class="device" data-device="tss">
-                            <div class="device-info">
-                                <div class="device-name">TSS Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="cod">
-                            <div class="device-info">
-                                <div class="device-name">COD Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="conductivity">
-                            <div class="device-info">
-                                <div class="device-name">Conductivity Device</div>
-                                <div class="device-location">RO in Kandy</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="bod">
-                            <div class="device-info">
-                                <div class="device-name">BOD Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="temp">
-                            <div class="device-info">
-                                <div class="device-name">Temp Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="turbidity">
-                            <div class="device-info">
-                                <div class="device-name">Turbidity Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="flow">
-                            <div class="device-info">
-                                <div class="device-name">Flow Meter</div>
-                                <div class="device-location">RO in Kandy</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="orp">
-                            <div class="device-info">
-                                <div class="device-name">ORP Device</div>
-                                <div class="device-location">WWTP Horana</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="tds">
-                            <div class="device-info">
-                                <div class="device-name">TDS Device</div>
-                                <div class="device-location">RO in Galle</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Gauges -->
-                <div class="section">
-                    <h2 class="section-title">Key Metrics</h2>
-                    <div class="gauges">
-                        <div class="gauge gauge-ph">
-                            <h3>pH Level (WWTP Horana)</h3>
-                            <div class="gauge-value">7.7</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="77,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">14</div>
-                                <div class="gauge-optimal">7-8</div>
-                            </div>
-                            <div class="gauge-status status-optimal">Optimal</div>
-                        </div>
-                        <div class="gauge gauge-tds">
-                            <h3>TDS Level (RO in Galle)</h3>
-                            <div class="gauge-value">0</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">1000</div>
-                                <div class="gauge-optimal">0-500</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                        <div class="gauge gauge-cod">
-                            <h3>COD Level (WWTP Jaffna)</h3>
-                            <div class="gauge-value">0</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">500</div>
-                                <div class="gauge-optimal">0-50</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                        <div class="gauge gauge-temp">
-                            <h3>Temperature (WWTP Jaffna)</h3>
-                            <div class="gauge-value">0°C</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">100</div>
-                                <div class="gauge-optimal">15-25</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                        <!-- BOD Gauge (added as it was missing from the HTML but present in CSS) -->
-                        <div class="gauge gauge-bod">
-                            <h3>BOD Level (WWTP Jaffna)</h3>
-                            <div class="gauge-value">0</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">100</div>
-                                <div class="gauge-optimal">0-30</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                        <!-- TSS Gauge (added as it was missing from the HTML but present in CSS) -->
-                        <div class="gauge gauge-tss">
-                            <h3>TSS Level (WWTP Jaffna)</h3>
-                            <div class="gauge-value">0</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">200</div>
-                                <div class="gauge-optimal">0-50</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                         <!-- Turbidity Gauge (added as it was missing from the HTML but present in CSS) -->
-                        <div class="gauge gauge-turbidity">
-                            <h3>Turbidity (WWTP Jaffna)</h3>
-                            <div class="gauge-value">0 NTU</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-72deg); left: 10%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(-36deg); left: 30%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(0deg); left: 50%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(36deg); left: 70%;"></div>
-                                <div class="gauge-marker" style="transform: translateX(-50%) rotate(72deg); left: 90%;"></div>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">50</div>
-                                <div class="gauge-optimal">0-5</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Kandy Dashboard -->
-            <div class="location-dashboard" id="kandy-dashboard">
-                <h1 class="dashboard-title">Kandy Water Treatment</h1>
-                
-                <!-- Device Status Grid -->
-                <div class="section">
-                    <h2 class="section-title">Device Status (Kandy)</h2>
-                    <div class="device-grid">
-                        <div class="device" data-device="conductivity-kandy">
-                            <div class="device-info">
-                                <div class="device-name">Conductivity Device</div>
-                                <div class="device-location">RO in Kandy</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="flow-kandy">
-                            <div class="device-info">
-                                <div class="device-name">Flow Meter</div>
-                                <div class="device-location">RO in Kandy</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                    </div>
-                </div>
+    <!-- Header Section -->
+    <header class="bg-green-600 p-4 text-white text-xl font-bold shadow-md flex items-center justify-between">
+        <span>&#9776; Factory X Main Dashboard</span>
+    </header>
 
-                 <!-- Gauges (Kandy) -->
-                <div class="section">
-                    <h2 class="section-title">Key Metrics (Kandy)</h2>
-                    <div class="gauges">
-                        <div class="gauge gauge-conductivity">
-                            <h3>Conductivity (RO in Kandy)</h3>
-                            <div class="gauge-value">0 µS/cm</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">2000</div>
-                                <div class="gauge-optimal">0-1000</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                        <div class="gauge gauge-flow">
-                            <h3>Flow Rate (RO in Kandy)</h3>
-                            <div class="gauge-value">0 L/min</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">100</div>
-                                <div class="gauge-optimal">20-50</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Main Content Grid -->
+    <main class="flex-grow p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
 
-            <!-- Colombo Dashboard -->
-            <div class="location-dashboard" id="colombo-dashboard">
-                <h1 class="dashboard-title">Colombo Water Treatment</h1>
-                
-                <!-- Device Status Grid -->
-                <div class="section">
-                    <h2 class="section-title">Device Status (Colombo)</h2>
-                    <div class="device-grid">
-                        <!-- Add Colombo specific devices here if any -->
-                        <div class="device" data-device="example-colombo">
-                            <div class="device-info">
-                                <div class="device-name">Colombo Device 1</div>
-                                <div class="device-location">Example Location C</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                    </div>
+        <!-- Device Status Panel -->
+        <div class="bg-gray-800 rounded-lg p-6 shadow-xl flex flex-col justify-start col-span-1 md:col-span-1">
+            <h2 class="text-xl font-semibold mb-4 text-white">Powered By Prudex</h2>
+            <div class="space-y-3">
+                <!-- Device Status Items -->
+                <div class="flex items-center space-x-3">
+                    <span class="w-3 h-3 rounded-full bg-red-500" id="cod-status-dot"></span>
+                    <span class="text-white">COD Device (WWTP Factory X)</span>
+                    <span class="text-red-500 font-medium ml-auto" id="cod-status-text">Disconnected</span>
                 </div>
-                <!-- Gauges (Colombo) -->
-                <div class="section">
-                    <h2 class="section-title">Key Metrics (Colombo)</h2>
-                    <div class="gauges">
-                        <!-- Add Colombo specific gauges here if any -->
-                        <div class="gauge">
-                            <h3>Example Metric C1</h3>
-                            <div class="gauge-value">N/A</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">100</div>
-                                <div class="gauge-optimal">50-70</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">No Data</div>
-                        </div>
-                    </div>
+                <div class="flex items-center space-x-3">
+                    <span class="w-3 h-3 rounded-full bg-red-500" id="bod-status-dot"></span>
+                    <span class="text-white">BOD Device (WWTP Factory X)</span>
+                    <span class="text-red-500 font-medium ml-auto" id="bod-status-text">Disconnected</span>
                 </div>
-            </div>
-
-            <!-- Jaffna Dashboard -->
-            <div class="location-dashboard" id="jaffna-dashboard">
-                <h1 class="dashboard-title">Jaffna Water Treatment</h1>
-                
-                <!-- Device Status Grid -->
-                <div class="section">
-                    <h2 class="section-title">Device Status (Jaffna)</h2>
-                    <div class="device-grid">
-                        <div class="device" data-device="tss-jaffna">
-                            <div class="device-info">
-                                <div class="device-name">TSS Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="cod-jaffna">
-                            <div class="device-info">
-                                <div class="device-name">COD Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="bod-jaffna">
-                            <div class="device-info">
-                                <div class="device-name">BOD Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="temp-jaffna">
-                            <div class="device-info">
-                                <div class="device-name">Temp Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                        <div class="device" data-device="turbidity-jaffna">
-                            <div class="device-info">
-                                <div class="device-name">Turbidity Device</div>
-                                <div class="device-location">WWTP Jaffna</div>
-                            </div>
-                            <span class="status disconnected">Disconnected</span>
-                        </div>
-                    </div>
+                <div class="flex items-center space-x-3">
+                    <span class="w-3 h-3 rounded-full bg-red-500" id="tss-status-dot"></span>
+                    <span class="text-white">TSS Device (WWTP Factory X)</span>
+                    <span class="text-red-500 font-medium ml-auto" id="tss-status-text">Disconnected</span>
                 </div>
-                 <!-- Gauges (Jaffna) -->
-                <div class="section">
-                    <h2 class="section-title">Key Metrics (Jaffna)</h2>
-                    <div class="gauges">
-                        <div class="gauge gauge-cod">
-                            <h3>COD Level (WWTP Jaffna)</h3>
-                            <div class="gauge-value">0</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">500</div>
-                                <div class="gauge-optimal">0-50</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                        <div class="gauge gauge-temp">
-                            <h3>Temperature (WWTP Jaffna)</h3>
-                            <div class="gauge-value">0°C</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">100</div>
-                                <div class="gauge-optimal">15-25</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                        <div class="gauge gauge-bod">
-                            <h3>BOD Level (WWTP Jaffna)</h3>
-                            <div class="gauge-value">0</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">100</div>
-                                <div class="gauge-optimal">0-30</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                        <div class="gauge gauge-tss">
-                            <h3>TSS Level (WWTP Jaffna) </h3>
-                            <div class="gauge-value">0</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">200</div>
-                                <div class="gauge-optimal">0-50</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                        <div class="gauge gauge-turbidity">
-                            <h3>Turbidity (WWTP Jaffna)</h3>
-                            <div class="gauge-value">0 NTU</div>
-                            <div class="gauge-container">
-                                <svg class="gauge-svg" viewBox="0 0 100 50">
-                                    <path class="gauge-bg" d="M10 50 A40 40 0 0 1 90 50" />
-                                    <path class="gauge-fg" stroke-dasharray="0,100" d="M10 50 A40 40 0 0 1 90 50" />
-                                </svg>
-                                <div class="gauge-min">0</div>
-                                <div class="gauge-max">50</div>
-                                <div class="gauge-optimal">0-5</div>
-                            </div>
-                            <div class="gauge-status status-disconnected">Disconnected</div>
-                        </div>
-                    </div>
+                <div class="flex items-center space-x-3">
+                    <span class="w-3 h-3 rounded-full bg-red-500" id="turbidity-status-dot"></span>
+                    <span class="text-white">Turbidity Device (WWTP Factory X)</span>
+                    <span class="text-red-500 font-medium ml-auto" id="turbidity-status-text">Disconnected</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="w-3 h-3 rounded-full bg-red-500" id="temp-status-dot"></span>
+                    <span class="text-white">Temp Device (WWTP Factory X)</span>
+                    <span class="text-red-500 font-medium ml-auto" id="temp-status-text">Disconnected</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- JavaScript for login and dashboard functionality -->
+        <!-- Turbidity Gauge -->
+        <div class="gauge-display">
+            <h3 class="text-white text-lg font-semibold mb-4">Turbidity Level (WWTP Factory X)</h3>
+            <div class="gauge-arc-container">
+                <div class="gauge-arc-bg"></div>
+                <div class="gauge-needle" id="turbidity-needle"></div>
+                <div class="gauge-center-dot"></div>
+            </div>
+            <div class="gauge-value-display">
+                <div class="text-4xl font-bold" id="turbidity-value">0.00</div>
+                <div class="text-sm" id="turbidity-unit">NTU</div>
+            </div>
+            <div class="gauge-min-max-labels">
+                <span>0</span>
+                <span>500</span>
+            </div>
+        </div>
+
+        <!-- BOD Gauge -->
+        <div class="gauge-display">
+            <h3 class="text-white text-lg font-semibold mb-4">BOD Level (WWTP Factory X)</h3>
+            <div class="gauge-arc-container">
+                <div class="gauge-arc-bg"></div>
+                <div class="gauge-needle" id="bod-needle"></div>
+                <div class="gauge-center-dot"></div>
+            </div>
+            <div class="gauge-value-display">
+                <div class="text-4xl font-bold" id="bod-value">0.00</div>
+                <div class="text-sm" id="bod-unit">mg/L</div>
+            </div>
+            <div class="gauge-min-max-labels">
+                <span>0</span>
+                <span>400</span>
+            </div>
+        </div>
+
+        <!-- COD Gauge -->
+        <div class="gauge-display">
+            <h3 class="text-white text-lg font-semibold mb-4">COD Level (WWTP Factory X)</h3>
+            <div class="gauge-arc-container">
+                <div class="gauge-arc-bg"></div>
+                <div class="gauge-needle" id="cod-needle"></div>
+                <div class="gauge-center-dot"></div>
+            </div>
+            <div class="gauge-value-display">
+                <div class="text-4xl font-bold" id="cod-value">0.00</div>
+                <div class="text-sm" id="cod-unit">mg/L</div>
+            </div>
+            <div class="gauge-min-max-labels">
+                <span>0</span>
+                <span>400</span>
+            </div>
+        </div>
+
+        <!-- Temperature Gauge -->
+        <div class="gauge-display">
+            <h3 class="text-white text-lg font-semibold mb-4">Temperature Level (WWTP Factory X)</h3>
+            <div class="gauge-arc-container">
+                <div class="gauge-arc-bg"></div>
+                <div class="gauge-needle" id="temp-needle"></div>
+                <div class="gauge-center-dot"></div>
+            </div>
+            <div class="gauge-value-display">
+                <div class="text-4xl font-bold" id="temp-value">0.00</div>
+                <div class="text-sm" id="temp-unit">°C</div>
+            </div>
+            <div class="gauge-min-max-labels">
+                <span>0</span>
+                <span>100</span>
+            </div>
+        </div>
+
+        <!-- TSS Gauge -->
+        <div class="gauge-display">
+            <h3 class="text-white text-lg font-semibold mb-4">TSS Level (WWTP Factory X)</h3>
+            <div class="gauge-arc-container">
+                <div class="gauge-arc-bg"></div>
+                <div class="gauge-needle" id="tss-needle"></div>
+                <div class="gauge-center-dot"></div>
+            </div>
+            <div class="gauge-value-display">
+                <div class="text-4xl font-bold" id="tss-value">0.00</div>
+                <div class="text-sm" id="tss-unit">mg/L</div>
+            </div>
+            <div class="gauge-min-max-labels">
+                <span>0</span>
+                <span>200</span>
+            </div>
+        </div>
+
+    </main>
+
     <script>
-        const loginPage = document.getElementById('login-page');
-        const dashboard = document.getElementById('dashboard');
-        const loginBtn = document.getElementById('login-btn');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const errorMessage = document.getElementById('error-message');
-        const logoutBtn = document.getElementById('logout-btn');
-        const dashboardBtn = document.getElementById('dashboard-btn');
-        const dashboardDropdown = document.getElementById('dashboard-dropdown');
-        const locationLinks = document.querySelectorAll('.dashboard-dropdown a');
-        const locationDashboards = document.querySelectorAll('.location-dashboard');
-        const currentTimeDisplay = document.getElementById('current-time');
+        const API_URL = 'https://api.prudex.net'; // Your backend API endpoint
 
-        // --- Authentication ---
-        loginBtn.addEventListener('click', () => {
-            const username = usernameInput.value;
-            const password = passwordInput.value;
-
-            // Simple hardcoded authentication for demonstration
-            if (username === 'admin' && password === 'admin') {
-                loginPage.style.display = 'none';
-                dashboard.style.display = 'block';
-                errorMessage.style.display = 'none';
-                updateTime(); // Start updating time on login
-                startDataRefresh(); // Start refreshing data on login
-            } else {
-                errorMessage.style.display = 'block';
-            }
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            dashboard.style.display = 'none';
-            loginPage.style.display = 'flex';
-            usernameInput.value = '';
-            passwordInput.value = '';
-            stopDataRefresh(); // Stop data refresh on logout
-        });
-
-        // --- Dashboard Navigation ---
-        dashboardBtn.addEventListener('click', () => {
-            dashboardDropdown.classList.toggle('show');
-        });
-
-        document.addEventListener('click', (event) => {
-            if (!dashboardBtn.contains(event.target) && !dashboardDropdown.contains(event.target)) {
-                dashboardDropdown.classList.remove('show');
-            }
-        });
-
-        locationLinks.forEach(link => {
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
-                const targetLocation = event.target.dataset.location;
-
-                locationDashboards.forEach(locDashboard => {
-                    locDashboard.classList.remove('active');
-                });
-                document.getElementById(`${targetLocation}-dashboard`).classList.add('active');
-
-                locationLinks.forEach(l => l.classList.remove('active'));
-                event.target.classList.add('active');
-
-                dashboardDropdown.classList.remove('show');
-            });
-        });
-
-        // --- Real-time Clock ---
-        function updateTime() {
-            const now = new Date();
-            const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-            currentTimeDisplay.textContent = now.toLocaleDateString('en-US', options);
-        }
-        setInterval(updateTime, 1000); // Update every second
-
-        // --- Fetch Data and Update Dashboard ---
-        const backendUrl = "https://api.prudex.net/latest";
-
-        // Define ranges for status calculation and gauge fill
-        const parameterRanges = {
-            Temp: { min: 0, max: 100, optimal: { min: 15, max: 25 }, unit: "°C" },
-            COD: { min: 0, max: 500, optimal: { min: 0, max: 50 }, unit: "mg/L" },
-            BOD: { min: 0, max: 100, optimal: { min: 0, max: 30 }, unit: "mg/L" }, // Assumed range
-            TSS: { min: 0, max: 200, optimal: { min: 0, max: 50 }, unit: "mg/L" }, // Assumed range
-            Turbidity: { min: 0, max: 50, optimal: { min: 0, max: 5 }, unit: "NTU" } // Assumed range
+        // Define gauge configurations: {id, min, max, unit, statusId}
+        const gauges = {
+            'Temp': { id: 'temp', min: 0, max: 100, unit: '°C', statusId: 'temp-status' },
+            'COD': { id: 'cod', min: 0, max: 400, unit: 'mg/L', statusId: 'cod-status' },
+            'BOD': { id: 'bod', min: 0, max: 400, unit: 'mg/L', statusId: 'bod-status' },
+            'TSS': { id: 'tss', min: 0, max: 200, unit: 'mg/L', statusId: 'tss-status' },
+            'Turbidity': { id: 'turbidity', min: 0, max: 500, unit: 'NTU', statusId: 'turbidity-status' }
         };
 
-        async function fetchData() {
+        /**
+         * Maps a value from one range to another.
+         * Used to convert sensor values to needle rotation angles.
+         * @param {number} value The current sensor value.
+         * @param {number} inMin Minimum value of the input range.
+         * @param {number} inMax Maximum value of the input range.
+         * @param {number} outMin Minimum value of the output range (e.g., angle).
+         * @param {number} outMax Maximum value of the output range (e.g., angle).
+         * @returns {number} The mapped value in the output range.
+         */
+        function mapValueToRange(value, inMin, inMax, outMin, outMax) {
+            const mapped = ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+            // Clamp the value to ensure it stays within the output range
+            return Math.min(Math.max(mapped, outMin), outMax);
+        }
+
+        /**
+         * Updates a specific gauge's value and needle rotation.
+         * @param {string} gaugeId The ID prefix of the gauge (e.g., 'temp', 'cod').
+         * @param {number} value The new value to display.
+         * @param {string} unit The unit for the value.
+         * @param {number} min The minimum value of the gauge.
+         * @param {number} max The maximum value of the gauge.
+         */
+        function updateGauge(gaugeId, value, unit, min, max) {
+            const valueElement = document.getElementById(`${gaugeId}-value`);
+            const unitElement = document.getElementById(`${gaugeId}-unit`);
+            const needleElement = document.getElementById(`${gaugeId}-needle`);
+
+            if (valueElement) valueElement.textContent = value.toFixed(2);
+            if (unitElement) unitElement.textContent = unit;
+
+            // Calculate rotation angle: -90deg for min, +90deg for max
+            const rotationAngle = mapValueToRange(value, min, max, -90, 90);
+            if (needleElement) {
+                needleElement.style.transform = `translateX(-50%) rotate(${rotationAngle}deg)`;
+            }
+        }
+
+        /**
+         * Updates the status of a device.
+         * @param {string} statusId The ID prefix of the status element (e.g., 'temp-status').
+         * @param {boolean} isConnected True if connected, false if disconnected.
+         */
+        function updateDeviceStatus(statusId, isConnected) {
+            const statusDot = document.getElementById(`${statusId}-dot`);
+            const statusText = document.getElementById(`${statusId}-text`);
+
+            if (statusDot && statusText) {
+                if (isConnected) {
+                    statusDot.classList.remove('bg-red-500');
+                    statusDot.classList.add('bg-green-500');
+                    statusText.classList.remove('text-red-500');
+                    statusText.classList.add('text-green-500');
+                    statusText.textContent = 'Connected';
+                } else {
+                    statusDot.classList.remove('bg-green-500');
+                    statusDot.classList.add('bg-red-500');
+                    statusText.classList.remove('text-green-500');
+                    statusText.classList.add('text-red-500');
+                    statusText.textContent = 'Disconnected';
+                }
+            }
+        }
+
+        /**
+         * Fetches data from the API and updates the dashboard.
+         */
+        async function fetchDataAndRefreshDashboard() {
             try {
-                const response = await fetch(backendUrl);
+                const response = await fetch(API_URL);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                const dataText = await response.text();
-                parseAndDisplayData(dataText);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                // Optionally, update all relevant gauges/devices to "Disconnected" or "Error" state
-                updateAllToDisconnected();
-            }
-        }
+                const rawText = await response.text(); // Get raw text as the payload is not strict JSON
+                console.log("Raw API response:", rawText);
 
-        function parseAndDisplayData(dataText) {
-            const data = {};
-            // Split the string by ', ' to get individual key-value-unit pairs
-            const pairs = dataText.split(', ');
-            pairs.forEach(pair => {
-                // Example: "Temp: 25.97 C"
-                const parts = pair.match(/(\w+):\s*([\d\.]+) (\w+\/?\w*)/);
-                if (parts && parts.length === 4) {
-                    const key = parts[1];
-                    const value = parseFloat(parts[2]);
-                    const unit = parts[3];
-                    data[key] = { value, unit };
-                }
-            });
-
-            // Update Temperature
-            updateGauge('Temp', data.Temp);
-            updateDeviceStatus('temp', data.Temp);
-
-            // Update COD
-            updateGauge('COD', data.COD);
-            updateDeviceStatus('cod', data.COD);
-
-            // Update BOD
-            updateGauge('BOD', data.BOD);
-            updateDeviceStatus('bod', data.BOD);
-
-            // Update TSS
-            updateGauge('TSS', data.TSS);
-            updateDeviceStatus('tss', data.TSS);
-
-            // Update Turbidity
-            updateGauge('Turbidity', data.Turbidity);
-            updateDeviceStatus('turbidity', data.Turbidity);
-        }
-
-        function updateGauge(paramName, paramData) {
-            const gaugeElement = document.querySelector(`.gauge-${paramName.toLowerCase()}`);
-            if (!gaugeElement) return;
-
-            const valueDisplay = gaugeElement.querySelector('.gauge-value');
-            const gaugeFg = gaugeElement.querySelector('.gauge-fg');
-            const gaugeStatus = gaugeElement.querySelector('.gauge-status');
-            const range = parameterRanges[paramName];
-
-            if (paramData && typeof paramData.value === 'number') {
-                const value = paramData.value;
-                const unit = paramData.unit || (range ? range.unit : ''); // Use provided unit or default
-
-                valueDisplay.textContent = `${value} ${unit}`;
-
-                // Calculate gauge fill percentage
-                if (range) {
-                    const percentage = ((value - range.min) / (range.max - range.min)) * 100;
-                    // Cap percentage between 0 and 100 for display
-                    const clampedPercentage = Math.max(0, Math.min(100, percentage));
-                    gaugeFg.setAttribute('stroke-dasharray', `${clampedPercentage}, 100`);
-
-                    // Update gauge status (optimal, warning, critical)
-                    let statusClass = '';
-                    let statusText = '';
-
-                    if (value >= range.optimal.min && value <= range.optimal.max) {
-                        statusClass = 'status-optimal';
-                        statusText = 'Optimal';
-                    } else if (value < range.min || value > range.max) {
-                        statusClass = 'status-critical';
-                        statusText = 'Critical';
-                    } else {
-                        statusClass = 'status-warning';
-                        statusText = 'Warning';
+                // Example payload: Temp: 25.46 C, COD: 82.28 mg/L, BOD: 32.91 mg/L, TSS: 12.01 mg/L, Turbidity: 0.00 NTU
+                // Parse the raw text data
+                const data = {};
+                rawText.split(', ').forEach(item => {
+                    const [key, valueUnit] = item.split(': ');
+                    if (key && valueUnit) {
+                        // Extract value by splitting at the first space, assuming unit follows
+                        const valueMatch = valueUnit.match(/^([\d.]+)/);
+                        if (valueMatch && valueMatch[1]) {
+                            data[key.trim()] = parseFloat(valueMatch[1]);
+                        }
                     }
-                    gaugeStatus.className = `gauge-status ${statusClass}`;
-                    gaugeStatus.textContent = statusText;
-                }
-            } else {
-                valueDisplay.textContent = `N/A ${range ? range.unit : ''}`;
-                gaugeFg.setAttribute('stroke-dasharray', `0, 100`);
-                gaugeStatus.className = 'gauge-status status-disconnected';
-                gaugeStatus.textContent = 'Disconnected';
-            }
-        }
+                });
+                console.log("Parsed data:", data);
 
-        function updateDeviceStatus(deviceType, paramData) {
-            const deviceElement = document.querySelector(`.device[data-device="${deviceType}"] .status`);
-            if (deviceElement) {
-                if (paramData && typeof paramData.value === 'number') {
-                    deviceElement.textContent = `${paramData.value} ${paramData.unit}`;
-                    deviceElement.classList.remove('disconnected');
-                    deviceElement.classList.add('connected');
+                let anyConnected = false;
+                for (const key in gauges) {
+                    const config = gauges[key];
+                    if (data.hasOwnProperty(key)) {
+                        updateGauge(config.id, data[key], config.unit, config.min, config.max);
+                        updateDeviceStatus(config.statusId, true); // Mark as connected if data received
+                        anyConnected = true;
+                    } else {
+                        // If a specific data point is missing, mark its device as disconnected
+                        updateDeviceStatus(config.statusId, false);
+                    }
+                }
+
+                if (anyConnected) {
+                    // If any data was successfully updated, reset generic disconnects
                 } else {
-                    deviceElement.textContent = 'Disconnected';
-                    deviceElement.classList.remove('connected');
-                    deviceElement.classList.add('disconnected');
+                    // If no data was updated, ensure all are disconnected
+                    for (const key in gauges) {
+                        updateDeviceStatus(gauges[key].statusId, false);
+                    }
+                }
+
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                // On error, set all devices to disconnected
+                for (const key in gauges) {
+                    updateDeviceStatus(gauges[key].statusId, false);
                 }
             }
         }
 
-        function updateAllToDisconnected() {
-            // This function sets all relevant devices and gauges to a disconnected state
-            const allDevices = document.querySelectorAll('.device .status');
-            allDevices.forEach(deviceStatus => {
-                deviceStatus.textContent = 'Disconnected';
-                deviceStatus.classList.remove('connected');
-                deviceStatus.classList.add('disconnected');
-            });
-
-            const allGauges = document.querySelectorAll('.gauge');
-            allGauges.forEach(gauge => {
-                const valueDisplay = gauge.querySelector('.gauge-value');
-                const gaugeFg = gauge.querySelector('.gauge-fg');
-                const gaugeStatus = gauge.querySelector('.gauge-status');
-
-                // Determine the parameter name from the gauge class
-                const gaugeClass = Array.from(gauge.classList).find(cls => cls.startsWith('gauge-'));
-                if (gaugeClass) {
-                    const paramName = gaugeClass.replace('gauge-', '');
-                    const unit = parameterRanges[paramName.charAt(0).toUpperCase() + paramName.slice(1)]?.unit || '';
-                    valueDisplay.textContent = `N/A ${unit}`;
-                } else {
-                    valueDisplay.textContent = 'N/A';
-                }
-                
-                gaugeFg.setAttribute('stroke-dasharray', `0, 100`);
-                gaugeStatus.className = 'gauge-status status-disconnected';
-                gaugeStatus.textContent = 'Disconnected';
-            });
-        }
-
-        let refreshIntervalId;
-        function startDataRefresh() {
-            // Fetch data immediately on load/login
-            fetchData(); 
-            // Then set an interval for periodic refresh (e.g., every 5 seconds)
-            refreshIntervalId = setInterval(fetchData, 5000); 
-        }
-
-        function stopDataRefresh() {
-            if (refreshIntervalId) {
-                clearInterval(refreshIntervalId);
-                refreshIntervalId = null;
-            }
-        }
-
-        // Initial setup
-        document.addEventListener('DOMContentLoaded', () => {
-            updateTime(); // Display initial time
-            // Data refresh starts after successful login
-        });
-
+        // Initial fetch and then refresh every 5 seconds
+        window.onload = function() {
+            fetchDataAndRefreshDashboard();
+            setInterval(fetchDataAndRefreshDashboard, 5000); // Refresh every 5 seconds
+        };
     </script>
 </body>
 </html>
+
