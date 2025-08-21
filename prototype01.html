@@ -311,16 +311,19 @@
         /* Styles for the h2 titles within glass panels */
         /* Removed as per request to remove "Device Status" and "Live Readings" text */
         /* .glass-panel h2 { ... } */
-    </style>
-</head>
-<body>
-    <!-- Video Background for Login Page -->
-    <div id="video-background">
-        <video autoplay loop muted playsinline>
-            <source src="https://prudenceeng.lk/wp-content/uploads/2025/08/download-2.jpg">
-            Your browser does not support the video tag.
-        </video>
-    </div>
+    <style>
+#image-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("https://prudenceeng.lk/wp-content/uploads/2025/08/download-2.jpg");
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+}
+</style>
 
     <!-- Login Page -->
     <div id="login-page" class="login-container">
