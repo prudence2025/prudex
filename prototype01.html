@@ -1,141 +1,495 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ESP32 COD Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0d1b2a;
-      color: #ffffff;
-      text-align: center;
-      padding: 20px;
-    }
-    h1 {
-      margin-bottom: 20px;
-      color: #00d4ff;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background: #1b263b;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #415a77;
-    }
-    th {
-      background: #415a77;
-      color: #fff;
-    }
-    tr:nth-child(even) {
-      background: #0d1b2a;
-    }
-    .latest {
-      font-size: 1.2em;
-      margin-top: 20px;
-      padding: 10px;
-      background: #1b263b;
-      border-radius: 10px;
-    }
-  </style>
-</head>
-<body>
-  <h1>ESP32 COD Monitoring</h1>
-
-  <div id="latest" class="latest">Loading latest data...</div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Device</th>
-        <th>Temperature (°C)</th>
-        <th>COD (mg/L)</th>
-        <th>BOD (mg/L)</th>
-        <th>TSS (mg/L)</th>
-        <th>Turbidity (NTU)</th>
-      </tr>
-    </thead>
-    <tbody id="data-table"></tbody>
-  </table>
-
-  <script>
-    const backendUrl = "https://api.prudex.net/latest"; // your backend API
-    const tableBody = document.getElementById("data-table");
-    const latestDiv = document.getElementById("latest");
-
-    async function fetchData() {
-      try {
-        const response = await fetch(backendUrl);
-        const data = await response.json();
-
-        // Clear table
-        tableBody.innerHTML = "";
-
-        // If backend returns array of records
-        if (Array.isArray(data)) {
-          data.reverse().forEach((item, index) => {
-            if (index === 0) {
-              latestDiv.innerHTML = `
-                Latest from <b>${item.device}</b><br>
-                Temp: ${item.temperature} °C | 
-                COD: ${item.cod} mg/L | 
-                BOD: ${item.bod} mg/L | 
-                TSS: ${item.tss} mg/L | 
-                Turbidity: ${item.turbidity} NTU
-              `;
-            }
-            const row = `
-              <tr>
-                <td>${item.timestamp || "N/A"}</td>
-                <td>${item.device}</td>
-                <td>${item.temperature}</td>
-                <td>${item.cod}</td>
-                <td>${item.bod}</td>
-                <td>${item.tss}</td>
-                <td>${item.turbidity}</td>
-              </tr>
-            `;
-            tableBody.innerHTML += row;
-          });
-        } 
-        // If backend only returns single latest record
-        else {
-          latestDiv.innerHTML = `
-            Latest from <b>${data.device}</b><br>
-            Temp: ${data.temperature} °C | 
-            COD: ${data.cod} mg/L | 
-            BOD: ${data.bod} mg/L | 
-            TSS: ${data.tss} mg/L | 
-            Turbidity: ${data.turbidity} NTU
-          `;
-          const row = `
-            <tr>
-              <td>${data.timestamp || "N/A"}</td>
-              <td>${data.device}</td>
-              <td>${data.temperature}</td>
-              <td>${data.cod}</td>
-              <td>${data.bod}</td>
-              <td>${data.tss}</td>
-              <td>${data.turbidity}</td>
-            </tr>
-          `;
-          tableBody.innerHTML = row;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory X Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Lighter background for the entire page */
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        latestDiv.innerHTML = "⚠️ Error connecting to backend";
-      }
-    }
 
-    // Load immediately + every 5 seconds
-    fetchData();
-    setInterval(fetchData, 5000);
-  </script>
+        /* Custom Styles for the Gauge component */
+        .gauge-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-height: 220px; /* Ensure consistent height for gauge cards */
+            text-align: center;
+        }
+
+        .gauge-header {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .gauge-value {
+            font-size: 3rem; /* text-5xl */
+            font-weight: 700; /* font-bold */
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+
+        .gauge-unit {
+            font-size: 0.875rem; /* text-sm */
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .gauge-arc-wrapper {
+            position: relative;
+            width: 140px; /* Diameter of the arc */
+            height: 70px; /* Half for semi-circle */
+            overflow: hidden;
+            border-bottom-left-radius: 70px;
+            border-bottom-right-radius: 70px;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .gauge-arc {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 140px;
+            height: 140px; /* Full circle height */
+            border-radius: 50%;
+            border: 8px solid #e0e0e0; /* Default light grey arc */
+            border-top-color: transparent;
+            border-right-color: transparent;
+            transform: rotate(-225deg); /* Rotate to position the arc correctly */
+            box-sizing: border-box;
+        }
+
+        .gauge-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 8px solid;
+            border-top-color: transparent;
+            border-right-color: transparent;
+            transform: rotate(-225deg);
+            box-sizing: border-box;
+            transition: border-color 0.5s ease-out; /* Smooth color transition */
+        }
+
+        .gauge-needle-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform-origin: bottom center;
+            width: 2px;
+            height: 60px; /* Length of the needle */
+            background-color: #333; /* Dark needle color */
+            border-radius: 1px 1px 0 0;
+            transform: translateX(-50%) rotate(-90deg); /* Initial position (min) */
+            transition: transform 0.5s ease-out; /* Smooth transition */
+            z-index: 2;
+        }
+
+        .gauge-center-dot {
+            position: absolute;
+            bottom: -4px; /* Adjust to cover needle pivot */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            background-color: #333; /* Dark dot */
+            border-radius: 50%;
+            z-index: 3;
+        }
+
+        .gauge-labels {
+            position: absolute;
+            width: calc(100% - 40px); /* Adjust for padding */
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem; /* text-xs */
+            color: #888;
+            bottom: 15px; /* Position above bottom padding */
+        }
+
+        /* Specific gauge colors */
+        .gauge-ph .gauge-fill { border-color: #007bff; } /* Blue */
+        .gauge-tds .gauge-fill { border-color: #9c27b0; } /* Purple */
+        .gauge-cod .gauge-fill { border-color: #ff9800; } /* Orange */
+        .gauge-temp .gauge-fill { border-color: #e91e63; } /* Pink */
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Section -->
+    <header class="bg-white p-4 shadow-md flex items-center justify-between text-gray-800">
+        <div class="flex items-center space-x-2">
+            <span class="text-xl font-bold">Factory X</span>
+        </div>
+        <div class="flex items-center space-x-4 text-sm font-medium">
+            <span id="current-date-time"></span>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-md transition-colors duration-200">Download Data</button>
+            <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md shadow-md transition-colors duration-200">Dashboard</button>
+            <button class="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md shadow-md transition-colors duration-200">Logout</button>
+        </div>
+    </header>
+
+    <main class="flex-grow p-6">
+        <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Water Treatment Monitoring</h1>
+
+        <!-- Device Status Section -->
+        <div class="bg-white rounded-lg p-6 shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-6 text-gray-800 flex items-center">
+                <span class="inline-block w-2 h-6 bg-purple-600 mr-3 rounded-sm"></span>Device Status
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <!-- Device Status Cards -->
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">pH Device</span>
+                    <span class="text-xs text-gray-500">WWTP Horana</span>
+                    <span id="ph-device-status" class="text-green-600 font-semibold mt-1">7.7</span>
+                </div>
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">TSS Device</span>
+                    <span class="text-xs text-gray-500">WWTP Jaffna</span>
+                    <span id="tss-device-status" class="text-red-600 font-semibold mt-1">Disconnected</span>
+                </div>
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">COD Device</span>
+                    <span class="text-xs text-gray-500">WWTP Jaffna</span>
+                    <span id="cod-device-status" class="text-red-600 font-semibold mt-1">Disconnected</span>
+                </div>
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">Conductivity Device</span>
+                    <span class="text-xs text-gray-500">RO in Kandy</span>
+                    <span id="conductivity-device-status" class="text-red-600 font-semibold mt-1">Disconnected</span>
+                </div>
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">BOD Device</span>
+                    <span class="text-xs text-gray-500">WWTP Jaffna</span>
+                    <span id="bod-device-status" class="text-red-600 font-semibold mt-1">Disconnected</span>
+                </div>
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">Temp Device</span>
+                    <span class="text-xs text-gray-500">WWTP Jaffna</span>
+                    <span id="temp-device-status" class="text-red-600 font-semibold mt-1">Disconnected</span>
+                </div>
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">Turbidity Device</span>
+                    <span class="text-xs text-gray-500">WWTP Jaffna</span>
+                    <span id="turbidity-device-status" class="text-red-600 font-semibold mt-1">Disconnected</span>
+                </div>
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">Flow Meter</span>
+                    <span class="text-xs text-gray-500">RO in Kandy</span>
+                    <span id="flow-device-status" class="text-red-600 font-semibold mt-1">Disconnected</span>
+                </div>
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">ORP Device</span>
+                    <span class="text-xs text-gray-500">WWTP Horana</span>
+                    <span id="orp-device-status" class="text-red-600 font-semibold mt-1">Disconnected</span>
+                </div>
+                <div class="bg-gray-100 rounded-md p-3 flex flex-col justify-between items-start text-gray-700 text-sm">
+                    <span class="font-medium">TDS Device</span>
+                    <span class="text-xs text-gray-500">RO in Galle</span>
+                    <span id="tds-device-status" class="text-red-600 font-semibold mt-1">Disconnected</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics Section -->
+        <div class="bg-white rounded-lg p-6 shadow-md">
+            <h2 class="text-xl font-semibold mb-6 text-gray-800 flex items-center">
+                <span class="inline-block w-2 h-6 bg-purple-600 mr-3 rounded-sm"></span>Key Metrics
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- pH Level Gauge -->
+                <div class="gauge-container gauge-ph">
+                    <div class="gauge-header">pH Level (WWTP Horana)</div>
+                    <div class="gauge-value" id="ph-value">7.7</div>
+                    <div class="gauge-unit"></div> <!-- No unit for pH typically displayed here -->
+                    <div class="gauge-arc-wrapper">
+                        <div class="gauge-arc"></div>
+                        <div class="gauge-fill" id="ph-fill"></div>
+                        <div class="gauge-needle-wrapper" id="ph-needle"></div>
+                        <div class="gauge-center-dot"></div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span>0</span>
+                        <span>14</span>
+                    </div>
+                </div>
+
+                <!-- TDS Level Gauge -->
+                <div class="gauge-container gauge-tds">
+                    <div class="gauge-header">TDS Level (RO in Galle)</div>
+                    <div class="gauge-value" id="tds-value">0</div>
+                    <div class="gauge-unit">mg/L</div>
+                    <div class="gauge-arc-wrapper">
+                        <div class="gauge-arc"></div>
+                        <div class="gauge-fill" id="tds-fill"></div>
+                        <div class="gauge-needle-wrapper" id="tds-needle"></div>
+                        <div class="gauge-center-dot"></div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span>0</span>
+                        <span>1000</span>
+                    </div>
+                </div>
+
+                <!-- COD Level Gauge -->
+                <div class="gauge-container gauge-cod">
+                    <div class="gauge-header">COD Level (WWTP Jaffna)</div>
+                    <div class="gauge-value" id="cod-value">0</div>
+                    <div class="gauge-unit">mg/L</div>
+                    <div class="gauge-arc-wrapper">
+                        <div class="gauge-arc"></div>
+                        <div class="gauge-fill" id="cod-fill"></div>
+                        <div class="gauge-needle-wrapper" id="cod-needle"></div>
+                        <div class="gauge-center-dot"></div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span>0</span>
+                        <span>500</span>
+                    </div>
+                </div>
+
+                <!-- Temperature Level Gauge -->
+                <div class="gauge-container gauge-temp">
+                    <div class="gauge-header">Temperature (WWTP Jaffna)</div>
+                    <div class="gauge-value" id="temp-value">0°C</div>
+                    <div class="gauge-unit"></div>
+                    <div class="gauge-arc-wrapper">
+                        <div class="gauge-arc"></div>
+                        <div class="gauge-fill" id="temp-fill"></div>
+                        <div class="gauge-needle-wrapper" id="temp-needle"></div>
+                        <div class="gauge-center-dot"></div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span>0</span>
+                        <span>100</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = 'https://api.prudex.net/latest'; // Updated backend API endpoint
+
+        // Define gauge configurations: {id, min, max, unit}
+        const gaugesConfig = {
+            'pH': { id: 'ph', min: 0, max: 14, unit: '' }, // pH has no unit text in the display
+            'TDS': { id: 'tds', min: 0, max: 1000, unit: 'mg/L' },
+            'COD': { id: 'cod', min: 0, max: 500, unit: 'mg/L' },
+            'Temp': { id: 'temp', min: 0, max: 100, unit: '°C' } // Will manually add °C to value for display
+        };
+
+        // Define device status elements
+        const deviceStatusElements = {
+            'Temp': 'temp-device-status',
+            'COD': 'cod-device-status',
+            'BOD': 'bod-device-status',
+            'TSS': 'tss-device-status',
+            'Turbidity': 'turbidity-device-status',
+            // Defaulting others to disconnected as they are not in the payload
+            'pH': 'ph-device-status', // This one has a value in the image, so special handling
+            'Conductivity': 'conductivity-device-status',
+            'Flow Meter': 'flow-device-status',
+            'ORP': 'orp-device-status',
+            'TDS': 'tds-device-status',
+        };
+
+        /**
+         * Updates the current date and time in the header.
+         */
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            document.getElementById('current-date-time').textContent = now.toLocaleString('en-US', options);
+        }
+
+        /**
+         * Maps a value from one range to a rotation angle for the gauge needle.
+         * The gauge arc represents 180 degrees (from -90 to 90 degrees).
+         * @param {number} value The current sensor value.
+         * @param {number} inMin Minimum value of the input range.
+         * @param {number} inMax Maximum value of the input range.
+         * @returns {number} The rotation angle in degrees (from -90 to 90).
+         */
+        function mapValueToAngle(value, inMin, inMax) {
+            const clampedValue = Math.min(Math.max(value, inMin), inMax); // Clamp value within min/max
+            return ((clampedValue - inMin) / (inMax - inMin)) * 180 - 90; // Map to -90 to +90 range
+        }
+
+        /**
+         * Updates a specific gauge's value and needle rotation.
+         * @param {string} gaugeId The ID prefix of the gauge (e.g., 'ph', 'cod').
+         * @param {number} value The new value to display.
+         * @param {string} unit The unit for the value (e.g., 'mg/L', '°C').
+         * @param {number} min The minimum value of the gauge.
+         * @param {number} max The maximum value of the gauge.
+         */
+        function updateGauge(gaugeId, value, unit, min, max) {
+            const valueElement = document.getElementById(`${gaugeId}-value`);
+            const needleElement = document.getElementById(`${gaugeId}-needle`);
+            const unitElement = document.querySelector(`#${gaugeId}-value + .gauge-unit`); // Select unit div right after value
+
+            if (valueElement) {
+                valueElement.textContent = value.toFixed(gaugeId === 'ph' ? 1 : 2); // pH usually one decimal
+                if (gaugeId === 'temp') {
+                    valueElement.textContent += unit; // Add unit directly to value for Temp
+                }
+            }
+            if (unitElement && gaugeId !== 'temp') { // Only update unit if not temp gauge, as it's part of the value
+                 unitElement.textContent = unit;
+            }
+
+            const rotationAngle = mapValueToAngle(value, min, max);
+            if (needleElement) {
+                needleElement.style.transform = `translateX(-50%) rotate(${rotationAngle}deg)`;
+            }
+        }
+
+        /**
+         * Updates the status text and color for a device.
+         * @param {string} elementId The ID of the status span element.
+         * @param {boolean} isConnected True if connected, false if disconnected.
+         * @param {string} [displayValue] Optional value to display if connected (e.g., pH).
+         */
+        function setDeviceStatus(elementId, isConnected, displayValue = null) {
+            const statusElement = document.getElementById(elementId);
+            if (statusElement) {
+                if (isConnected) {
+                    statusElement.classList.remove('text-red-600');
+                    statusElement.classList.add('text-green-600');
+                    statusElement.textContent = displayValue !== null ? displayValue : 'Connected';
+                } else {
+                    statusElement.classList.remove('text-green-600');
+                    statusElement.add('text-red-600');
+                    statusElement.textContent = 'Disconnected';
+                }
+            }
+        }
+
+        /**
+         * Fetches data from the API and updates the dashboard.
+         */
+        async function fetchDataAndRefreshDashboard() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const rawText = await response.text();
+                console.log("Raw API response:", rawText);
+
+                // Initialize all device statuses to disconnected (except pH which has static value in image)
+                for (const key in deviceStatusElements) {
+                    if (key !== 'pH') { // pH is handled specially
+                        setDeviceStatus(deviceStatusElements[key], false);
+                    }
+                }
+
+                // Parse the raw text data
+                const parsedData = {};
+                rawText.split(', ').forEach(item => {
+                    const parts = item.split(': ');
+                    if (parts.length >= 2) {
+                        const key = parts[0].trim();
+                        // Handle cases where value might contain units (e.g., "25.33 C")
+                        const valueMatch = parts[1].match(/^([\d.]+)/);
+                        if (valueMatch && valueMatch[1]) {
+                            parsedData[key] = parseFloat(valueMatch[1]);
+                        }
+                    }
+                });
+                console.log("Parsed data:", parsedData);
+
+                // Update Key Metrics Gauges
+                // pH is static at 7.7 in the image, not in payload, so keep it static for now
+                updateGauge(gaugesConfig['pH'].id, 7.7, gaugesConfig['pH'].unit, gaugesConfig['pH'].min, gaugesConfig['pH'].max);
+                setDeviceStatus(deviceStatusElements['pH'], true, '7.7'); // pH device is connected and shows value
+
+                if (parsedData.hasOwnProperty('TDS')) { // TDS is not in current example payload, but in image
+                    updateGauge(gaugesConfig['TDS'].id, parsedData['TDS'], gaugesConfig['TDS'].unit, gaugesConfig['TDS'].min, gaugesConfig['TDS'].max);
+                    setDeviceStatus(deviceStatusElements['TDS'], true);
+                } else {
+                     updateGauge(gaugesConfig['TDS'].id, 0, gaugesConfig['TDS'].unit, gaugesConfig['TDS'].min, gaugesConfig['TDS'].max); // Default to 0 if not present
+                     setDeviceStatus(deviceStatusElements['TDS'], false);
+                }
+
+                if (parsedData.hasOwnProperty('COD')) {
+                    updateGauge(gaugesConfig['COD'].id, parsedData['COD'], gaugesConfig['COD'].unit, gaugesConfig['COD'].min, gaugesConfig['COD'].max);
+                    setDeviceStatus(deviceStatusElements['COD'], true);
+                }
+
+                if (parsedData.hasOwnProperty('Temp')) {
+                    updateGauge(gaugesConfig['Temp'].id, parsedData['Temp'], gaugesConfig['Temp'].unit, gaugesConfig['Temp'].min, gaugesConfig['Temp'].max);
+                    setDeviceStatus(deviceStatusElements['Temp'], true);
+                }
+
+                // Update other Device Statuses based on payload presence
+                if (parsedData.hasOwnProperty('BOD')) {
+                    setDeviceStatus(deviceStatusElements['BOD'], true);
+                }
+                if (parsedData.hasOwnProperty('TSS')) {
+                    setDeviceStatus(deviceStatusElements['TSS'], true);
+                }
+                if (parsedData.hasOwnProperty('Turbidity')) {
+                    setDeviceStatus(deviceStatusElements['Turbidity'], true);
+                }
+
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                // On error, ensure all relevant devices are disconnected
+                for (const key in deviceStatusElements) {
+                     if (key === 'pH') { // pH is static in image
+                        setDeviceStatus(deviceStatusElements[key], true, '7.7');
+                     } else {
+                        setDeviceStatus(deviceStatusElements[key], false);
+                     }
+                }
+                 // Reset gauge values to 0 on error
+                for (const key in gaugesConfig) {
+                    if (key !== 'pH') { // pH is static in image
+                        updateGauge(gaugesConfig[key].id, 0, gaugesConfig[key].unit, gaugesConfig[key].min, gaugesConfig[key].max);
+                    }
+                }
+            }
+        }
+
+        // Initial setup and data fetching
+        window.onload = function() {
+            updateDateTime(); // Set initial date/time
+            setInterval(updateDateTime, 1000); // Update every second for time
+            fetchDataAndRefreshDashboard();
+            setInterval(fetchDataAndRefreshDashboard, 5000); // Refresh data every 5 seconds
+        };
+    </script>
 </body>
 </html>
+
