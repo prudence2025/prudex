@@ -1,384 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Factory X Main Dashboard</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #2c2c2c; /* Darker background for the entire page */
-            color: #e0e0e0;
-        }
-
-        /* Custom CSS for the semi-circular gauge visuals */
-        .gauge-display {
-            position: relative;
-            width: 100%;
-            height: 150px; /* Adjust height as needed for proportion */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end; /* Align content to the bottom of the container */
-            background-color: #3f3f46; /* Panel background */
-            border-radius: 12px;
-            padding: 16px;
-            box-sizing: border-box;
-            overflow: hidden; /* Hide parts of the gauge elements */
-            margin-bottom: 20px; /* Space between rows */
-        }
-
-        .gauge-arc-container {
-            position: relative;
-            width: 180px; /* Diameter of the full circle */
-            height: 90px; /* Half of the diameter for semi-circle effect */
-            overflow: hidden;
-            border-bottom-left-radius: 90px;
-            border-bottom-right-radius: 90px;
-            margin-bottom: 10px;
-        }
-
-        .gauge-arc-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 180px;
-            height: 180px; /* Full circle height */
-            border-radius: 50%;
-            border: 8px solid #555; /* Base arc color */
-            box-sizing: border-box;
-            transform: translateY(-50%); /* Move up to show bottom half */
-        }
-
-        .gauge-needle {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform-origin: bottom center;
-            width: 4px;
-            height: 70px; /* Length of the needle */
-            background-color: #4CAF50; /* Green needle color */
-            border-radius: 2px 2px 0 0;
-            transform: translateX(-50%) rotate(-90deg); /* Initial position (min) */
-            transition: transform 0.5s ease-out; /* Smooth transition */
-            z-index: 5;
-        }
-
-        .gauge-center-dot {
-            position: absolute;
-            bottom: -5px; /* Adjust to cover needle pivot */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 12px;
-            height: 12px;
-            background-color: #333; /* Dark dot to match background */
-            border-radius: 50%;
-            z-index: 6;
-        }
-
-        .gauge-value-display {
-            position: absolute;
-            top: 50%; /* Center vertically within the arc space */
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            color: white;
-            z-index: 7;
-        }
-
-        .gauge-min-max-labels {
-            position: absolute;
-            bottom: 0;
-            width: calc(100% - 32px); /* Adjust for padding */
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem; /* text-xs */
-            color: #aaa;
-            z-index: 8;
-            padding-bottom: 5px; /* Space from the very bottom of the panel */
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 COD Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d1b2a;
+      color: #ffffff;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #00d4ff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #1b263b;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #415a77;
+    }
+    th {
+      background: #415a77;
+      color: #fff;
+    }
+    tr:nth-child(even) {
+      background: #0d1b2a;
+    }
+    .latest {
+      font-size: 1.2em;
+      margin-top: 20px;
+      padding: 10px;
+      background: #1b263b;
+      border-radius: 10px;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
+  <h1>ESP32 COD Monitoring</h1>
 
-    <!-- Header Section -->
-    <header class="bg-green-600 p-4 text-white text-xl font-bold shadow-md flex items-center justify-between">
-        <span>&#9776; Factory X Main Dashboard</span>
-    </header>
+  <div id="latest" class="latest">Loading latest data...</div>
 
-    <!-- Main Content Grid -->
-    <main class="flex-grow p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Device</th>
+        <th>Temperature (°C)</th>
+        <th>COD (mg/L)</th>
+        <th>BOD (mg/L)</th>
+        <th>TSS (mg/L)</th>
+        <th>Turbidity (NTU)</th>
+      </tr>
+    </thead>
+    <tbody id="data-table"></tbody>
+  </table>
 
-        <!-- Device Status Panel -->
-        <div class="bg-gray-800 rounded-lg p-6 shadow-xl flex flex-col justify-start col-span-1 md:col-span-1">
-            <h2 class="text-xl font-semibold mb-4 text-white">Powered By Prudex</h2>
-            <div class="space-y-3">
-                <!-- Device Status Items -->
-                <div class="flex items-center space-x-3">
-                    <span class="w-3 h-3 rounded-full bg-red-500" id="cod-status-dot"></span>
-                    <span class="text-white">COD Device (WWTP Factory X)</span>
-                    <span class="text-red-500 font-medium ml-auto" id="cod-status-text">Disconnected</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <span class="w-3 h-3 rounded-full bg-red-500" id="bod-status-dot"></span>
-                    <span class="text-white">BOD Device (WWTP Factory X)</span>
-                    <span class="text-red-500 font-medium ml-auto" id="bod-status-text">Disconnected</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <span class="w-3 h-3 rounded-full bg-red-500" id="tss-status-dot"></span>
-                    <span class="text-white">TSS Device (WWTP Factory X)</span>
-                    <span class="text-red-500 font-medium ml-auto" id="tss-status-text">Disconnected</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <span class="w-3 h-3 rounded-full bg-red-500" id="turbidity-status-dot"></span>
-                    <span class="text-white">Turbidity Device (WWTP Factory X)</span>
-                    <span class="text-red-500 font-medium ml-auto" id="turbidity-status-text">Disconnected</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <span class="w-3 h-3 rounded-full bg-red-500" id="temp-status-dot"></span>
-                    <span class="text-white">Temp Device (WWTP Factory X)</span>
-                    <span class="text-red-500 font-medium ml-auto" id="temp-status-text">Disconnected</span>
-                </div>
-            </div>
-        </div>
+  <script>
+    const backendUrl = "https://api.prudex.net"; // your backend API
+    const tableBody = document.getElementById("data-table");
+    const latestDiv = document.getElementById("latest");
 
-        <!-- Turbidity Gauge -->
-        <div class="gauge-display">
-            <h3 class="text-white text-lg font-semibold mb-4">Turbidity Level (WWTP Factory X)</h3>
-            <div class="gauge-arc-container">
-                <div class="gauge-arc-bg"></div>
-                <div class="gauge-needle" id="turbidity-needle"></div>
-                <div class="gauge-center-dot"></div>
-            </div>
-            <div class="gauge-value-display">
-                <div class="text-4xl font-bold" id="turbidity-value">0.00</div>
-                <div class="text-sm" id="turbidity-unit">NTU</div>
-            </div>
-            <div class="gauge-min-max-labels">
-                <span>0</span>
-                <span>500</span>
-            </div>
-        </div>
+    async function fetchData() {
+      try {
+        const response = await fetch(backendUrl);
+        const data = await response.json();
 
-        <!-- BOD Gauge -->
-        <div class="gauge-display">
-            <h3 class="text-white text-lg font-semibold mb-4">BOD Level (WWTP Factory X)</h3>
-            <div class="gauge-arc-container">
-                <div class="gauge-arc-bg"></div>
-                <div class="gauge-needle" id="bod-needle"></div>
-                <div class="gauge-center-dot"></div>
-            </div>
-            <div class="gauge-value-display">
-                <div class="text-4xl font-bold" id="bod-value">0.00</div>
-                <div class="text-sm" id="bod-unit">mg/L</div>
-            </div>
-            <div class="gauge-min-max-labels">
-                <span>0</span>
-                <span>400</span>
-            </div>
-        </div>
+        // Clear table
+        tableBody.innerHTML = "";
 
-        <!-- COD Gauge -->
-        <div class="gauge-display">
-            <h3 class="text-white text-lg font-semibold mb-4">COD Level (WWTP Factory X)</h3>
-            <div class="gauge-arc-container">
-                <div class="gauge-arc-bg"></div>
-                <div class="gauge-needle" id="cod-needle"></div>
-                <div class="gauge-center-dot"></div>
-            </div>
-            <div class="gauge-value-display">
-                <div class="text-4xl font-bold" id="cod-value">0.00</div>
-                <div class="text-sm" id="cod-unit">mg/L</div>
-            </div>
-            <div class="gauge-min-max-labels">
-                <span>0</span>
-                <span>400</span>
-            </div>
-        </div>
-
-        <!-- Temperature Gauge -->
-        <div class="gauge-display">
-            <h3 class="text-white text-lg font-semibold mb-4">Temperature Level (WWTP Factory X)</h3>
-            <div class="gauge-arc-container">
-                <div class="gauge-arc-bg"></div>
-                <div class="gauge-needle" id="temp-needle"></div>
-                <div class="gauge-center-dot"></div>
-            </div>
-            <div class="gauge-value-display">
-                <div class="text-4xl font-bold" id="temp-value">0.00</div>
-                <div class="text-sm" id="temp-unit">°C</div>
-            </div>
-            <div class="gauge-min-max-labels">
-                <span>0</span>
-                <span>100</span>
-            </div>
-        </div>
-
-        <!-- TSS Gauge -->
-        <div class="gauge-display">
-            <h3 class="text-white text-lg font-semibold mb-4">TSS Level (WWTP Factory X)</h3>
-            <div class="gauge-arc-container">
-                <div class="gauge-arc-bg"></div>
-                <div class="gauge-needle" id="tss-needle"></div>
-                <div class="gauge-center-dot"></div>
-            </div>
-            <div class="gauge-value-display">
-                <div class="text-4xl font-bold" id="tss-value">0.00</div>
-                <div class="text-sm" id="tss-unit">mg/L</div>
-            </div>
-            <div class="gauge-min-max-labels">
-                <span>0</span>
-                <span>200</span>
-            </div>
-        </div>
-
-    </main>
-
-    <script>
-        const API_URL = 'https://api.prudex.net'; // Your backend API endpoint
-
-        // Define gauge configurations: {id, min, max, unit, statusId}
-        const gauges = {
-            'Temp': { id: 'temp', min: 0, max: 100, unit: '°C', statusId: 'temp-status' },
-            'COD': { id: 'cod', min: 0, max: 400, unit: 'mg/L', statusId: 'cod-status' },
-            'BOD': { id: 'bod', min: 0, max: 400, unit: 'mg/L', statusId: 'bod-status' },
-            'TSS': { id: 'tss', min: 0, max: 200, unit: 'mg/L', statusId: 'tss-status' },
-            'Turbidity': { id: 'turbidity', min: 0, max: 500, unit: 'NTU', statusId: 'turbidity-status' }
-        };
-
-        /**
-         * Maps a value from one range to another.
-         * Used to convert sensor values to needle rotation angles.
-         * @param {number} value The current sensor value.
-         * @param {number} inMin Minimum value of the input range.
-         * @param {number} inMax Maximum value of the input range.
-         * @param {number} outMin Minimum value of the output range (e.g., angle).
-         * @param {number} outMax Maximum value of the output range (e.g., angle).
-         * @returns {number} The mapped value in the output range.
-         */
-        function mapValueToRange(value, inMin, inMax, outMin, outMax) {
-            const mapped = ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
-            // Clamp the value to ensure it stays within the output range
-            return Math.min(Math.max(mapped, outMin), outMax);
-        }
-
-        /**
-         * Updates a specific gauge's value and needle rotation.
-         * @param {string} gaugeId The ID prefix of the gauge (e.g., 'temp', 'cod').
-         * @param {number} value The new value to display.
-         * @param {string} unit The unit for the value.
-         * @param {number} min The minimum value of the gauge.
-         * @param {number} max The maximum value of the gauge.
-         */
-        function updateGauge(gaugeId, value, unit, min, max) {
-            const valueElement = document.getElementById(`${gaugeId}-value`);
-            const unitElement = document.getElementById(`${gaugeId}-unit`);
-            const needleElement = document.getElementById(`${gaugeId}-needle`);
-
-            if (valueElement) valueElement.textContent = value.toFixed(2);
-            if (unitElement) unitElement.textContent = unit;
-
-            // Calculate rotation angle: -90deg for min, +90deg for max
-            const rotationAngle = mapValueToRange(value, min, max, -90, 90);
-            if (needleElement) {
-                needleElement.style.transform = `translateX(-50%) rotate(${rotationAngle}deg)`;
+        // If backend returns array of records
+        if (Array.isArray(data)) {
+          data.reverse().forEach((item, index) => {
+            if (index === 0) {
+              latestDiv.innerHTML = `
+                Latest from <b>${item.device}</b><br>
+                Temp: ${item.temperature} °C | 
+                COD: ${item.cod} mg/L | 
+                BOD: ${item.bod} mg/L | 
+                TSS: ${item.tss} mg/L | 
+                Turbidity: ${item.turbidity} NTU
+              `;
             }
+            const row = `
+              <tr>
+                <td>${item.timestamp || "N/A"}</td>
+                <td>${item.device}</td>
+                <td>${item.temperature}</td>
+                <td>${item.cod}</td>
+                <td>${item.bod}</td>
+                <td>${item.tss}</td>
+                <td>${item.turbidity}</td>
+              </tr>
+            `;
+            tableBody.innerHTML += row;
+          });
+        } 
+        // If backend only returns single latest record
+        else {
+          latestDiv.innerHTML = `
+            Latest from <b>${data.device}</b><br>
+            Temp: ${data.temperature} °C | 
+            COD: ${data.cod} mg/L | 
+            BOD: ${data.bod} mg/L | 
+            TSS: ${data.tss} mg/L | 
+            Turbidity: ${data.turbidity} NTU
+          `;
+          const row = `
+            <tr>
+              <td>${data.timestamp || "N/A"}</td>
+              <td>${data.device}</td>
+              <td>${data.temperature}</td>
+              <td>${data.cod}</td>
+              <td>${data.bod}</td>
+              <td>${data.tss}</td>
+              <td>${data.turbidity}</td>
+            </tr>
+          `;
+          tableBody.innerHTML = row;
         }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        latestDiv.innerHTML = "⚠️ Error connecting to backend";
+      }
+    }
 
-        /**
-         * Updates the status of a device.
-         * @param {string} statusId The ID prefix of the status element (e.g., 'temp-status').
-         * @param {boolean} isConnected True if connected, false if disconnected.
-         */
-        function updateDeviceStatus(statusId, isConnected) {
-            const statusDot = document.getElementById(`${statusId}-dot`);
-            const statusText = document.getElementById(`${statusId}-text`);
-
-            if (statusDot && statusText) {
-                if (isConnected) {
-                    statusDot.classList.remove('bg-red-500');
-                    statusDot.classList.add('bg-green-500');
-                    statusText.classList.remove('text-red-500');
-                    statusText.classList.add('text-green-500');
-                    statusText.textContent = 'Connected';
-                } else {
-                    statusDot.classList.remove('bg-green-500');
-                    statusDot.classList.add('bg-red-500');
-                    statusText.classList.remove('text-green-500');
-                    statusText.classList.add('text-red-500');
-                    statusText.textContent = 'Disconnected';
-                }
-            }
-        }
-
-        /**
-         * Fetches data from the API and updates the dashboard.
-         */
-        async function fetchDataAndRefreshDashboard() {
-            try {
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const rawText = await response.text(); // Get raw text as the payload is not strict JSON
-                console.log("Raw API response:", rawText);
-
-                // Example payload: Temp: 25.46 C, COD: 82.28 mg/L, BOD: 32.91 mg/L, TSS: 12.01 mg/L, Turbidity: 0.00 NTU
-                // Parse the raw text data
-                const data = {};
-                rawText.split(', ').forEach(item => {
-                    const [key, valueUnit] = item.split(': ');
-                    if (key && valueUnit) {
-                        // Extract value by splitting at the first space, assuming unit follows
-                        const valueMatch = valueUnit.match(/^([\d.]+)/);
-                        if (valueMatch && valueMatch[1]) {
-                            data[key.trim()] = parseFloat(valueMatch[1]);
-                        }
-                    }
-                });
-                console.log("Parsed data:", data);
-
-                let anyConnected = false;
-                for (const key in gauges) {
-                    const config = gauges[key];
-                    if (data.hasOwnProperty(key)) {
-                        updateGauge(config.id, data[key], config.unit, config.min, config.max);
-                        updateDeviceStatus(config.statusId, true); // Mark as connected if data received
-                        anyConnected = true;
-                    } else {
-                        // If a specific data point is missing, mark its device as disconnected
-                        updateDeviceStatus(config.statusId, false);
-                    }
-                }
-
-                if (anyConnected) {
-                    // If any data was successfully updated, reset generic disconnects
-                } else {
-                    // If no data was updated, ensure all are disconnected
-                    for (const key in gauges) {
-                        updateDeviceStatus(gauges[key].statusId, false);
-                    }
-                }
-
-            } catch (error) {
-                console.error("Failed to fetch data:", error);
-                // On error, set all devices to disconnected
-                for (const key in gauges) {
-                    updateDeviceStatus(gauges[key].statusId, false);
-                }
-            }
-        }
-
-        // Initial fetch and then refresh every 5 seconds
-        window.onload = function() {
-            fetchDataAndRefreshDashboard();
-            setInterval(fetchDataAndRefreshDashboard, 5000); // Refresh every 5 seconds
-        };
-    </script>
+    // Load immediately + every 5 seconds
+    fetchData();
+    setInterval(fetchData, 5000);
+  </script>
 </body>
 </html>
-
