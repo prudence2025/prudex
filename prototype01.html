@@ -6,6 +6,7 @@
     <title>Factory X Main Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Base styles for the body */
         body {
@@ -208,6 +209,7 @@
             text-align: left;
             position: relative;
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer;
         }
         .device-card:hover {
             transform: translateY(-5px);
@@ -294,6 +296,79 @@
         .hidden {
             display: none;
         }
+
+        /* Modal styles for historical data */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 25px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            text-align: center;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .data-table th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .loading-text {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -338,10 +413,35 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal for historical data -->
+    <div id="history-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close-btn">&times;</button>
+            <h2 class="modal-title" id="modal-title">Historical Data</h2>
+            <div class="chart-container">
+                <canvas id="history-chart"></canvas>
+            </div>
+            <div id="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr id="table-headers">
+                            <th>Timestamp</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                    </tbody>
+                </table>
+            </div>
+            <div id="loading-message" class="loading-text">Loading data...</div>
+        </div>
+    </div>
     
     <script>
         // API endpoint for fetching data
         const backendUrl = "https://api.prudex.net/latest";
+        const historicalDataUrl = "https://api.prudex.net/download";
 
         // DOM element references
         const loginPage = document.getElementById("login-page");
@@ -362,8 +462,17 @@
         const dashboardDropdownContent = document.getElementById("dashboard-dropdown-content");
         const dropdownItems = document.querySelectorAll(".dropdown-item");
 
+        // Modal elements
+        const historyModal = document.getElementById("history-modal");
+        const modalCloseBtn = document.getElementById("modal-close-btn");
+        const modalTitle = document.getElementById("modal-title");
+        const historyChartCanvas = document.getElementById("history-chart");
+        const tableBody = document.getElementById("table-body");
+        const loadingMessage = document.getElementById("loading-message");
+
         let currentDashboardView = "main"; // Default view
         let fetchDataInterval; // Variable to store the interval ID
+        let historyChart = null; // Chart.js instance
 
 
         // Define maximum values for each parameter for gauge scaling
@@ -461,12 +570,18 @@
             if (!cardElement) {
                 // If the card doesn't exist, create it
                 const cardHtml = `
-                    <div id="${id}-device-card" class="device-card">
+                    <div id="${id}-device-card" class="device-card" data-parameter="${id}">
                         <div class="device-name">${label} Sensor</div>
                         ${contentHtml}
                     </div>
                 `;
                 deviceStatusContainer.insertAdjacentHTML('beforeend', cardHtml);
+                
+                // Add click event listener to the new card
+                const newCard = document.getElementById(`${id}-device-card`);
+                newCard.addEventListener('click', () => {
+                    showHistoricalData(id, label, unit);
+                });
             } else {
                 // If card exists, update its content
                 cardElement.innerHTML = `
@@ -577,6 +692,171 @@
             }
         }
 
+        /**
+         * Fetches historical data for a specific parameter and displays it in a modal
+         * @param {string} parameter - The parameter ID (e.g., 'temperature')
+         * @param {string} label - The display label for the parameter
+         * @param {string} unit - The unit of measurement
+         */
+        async function showHistoricalData(parameter, label, unit) {
+            // Show modal with loading state
+            historyModal.classList.remove('hidden');
+            modalTitle.textContent = `${label} Historical Data`;
+            tableBody.innerHTML = '';
+            loadingMessage.classList.remove('hidden');
+            
+            try {
+                // Fetch CSV data
+                const response = await fetch(historicalDataUrl);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch historical data. Status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                const data = parseCSV(csvText);
+                
+                // Filter and process data for the selected parameter
+                const parameterData = data
+                    .filter(row => row[parameter] !== undefined && row[parameter] !== '')
+                    .map(row => ({
+                        timestamp: row.timestamp,
+                        value: parseFloat(row[parameter])
+                    }))
+                    .reverse(); // Show latest data first
+                
+                // Hide loading message
+                loadingMessage.classList.add('hidden');
+                
+                // Update table with data
+                parameterData.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatTimestamp(item.timestamp)}</td>
+                        <td>${item.value.toFixed(2)} ${unit}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // Create chart
+                createChart(parameterData, label, unit);
+                
+            } catch (error) {
+                console.error("Error fetching historical data:", error);
+                loadingMessage.textContent = "Error loading data. Please try again.";
+            }
+        }
+
+        /**
+         * Parses CSV text into an array of objects
+         * @param {string} csvText - The CSV text to parse
+         * @returns {Array} - Array of objects representing the CSV data
+         */
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',').map(header => header.trim());
+            
+            return lines.slice(1).map(line => {
+                const values = line.split(',').map(value => value.trim());
+                const obj = {};
+                headers.forEach((header, i) => {
+                    obj[header] = values[i];
+                });
+                return obj;
+            }).filter(obj => obj.timestamp); // Filter out empty rows
+        }
+
+        /**
+         * Formats a timestamp for display
+         * @param {string} timestamp - The timestamp to format
+         * @returns {string} - Formatted timestamp
+         */
+        function formatTimestamp(timestamp) {
+            // Handle different timestamp formats
+            if (timestamp.includes('/')) {
+                // Format like "8/22/2025 11:22"
+                const [datePart, timePart] = timestamp.split(' ');
+                const [month, day, year] = datePart.split('/');
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${timePart}`;
+            }
+            return timestamp; // Return as-is if already in a good format
+        }
+
+        /**
+         * Creates a chart using Chart.js
+         * @param {Array} data - The data to display in the chart
+         * @param {string} label - The label for the data
+         * @param {string} unit - The unit of measurement
+         */
+        function createChart(data, label, unit) {
+            const ctx = historyChartCanvas.getContext('2d');
+            
+            // Destroy previous chart if it exists
+            if (historyChart) {
+                historyChart.destroy();
+            }
+            
+            // Prepare data for chart
+            const timestamps = data.map(item => formatTimestamp(item.timestamp));
+            const values = data.map(item => item.value);
+            
+            // Create new chart
+            historyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [{
+                        label: `${label} (${unit})`,
+                        data: values,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: `${label} (${unit})`
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            },
+                            ticks: {
+                                maxTicksLimit: 10,
+                                callback: function(value, index, values) {
+                                    // Show only time part for better readability
+                                    const fullTimestamp = this.getLabelForValue(value);
+                                    return fullTimestamp.split(' ')[1]; // Return only time part
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${label} Over Time`
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${label}: ${context.raw} ${unit}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         // --- Login/Logout Logic ---
         function showLoginPage() {
             loginPage.classList.remove("hidden");
@@ -644,6 +924,18 @@
                 e.preventDefault();
                 setDashboardView(e.target.dataset.dashboard);
             });
+        });
+
+        // Modal close button event
+        modalCloseBtn.addEventListener('click', () => {
+            historyModal.classList.add('hidden');
+        });
+
+        // Close modal when clicking outside
+        historyModal.addEventListener('click', (e) => {
+            if (e.target === historyModal) {
+                historyModal.classList.add('hidden');
+            }
         });
 
         showLoginPage();
