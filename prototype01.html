@@ -136,24 +136,23 @@
             width: 180px;
             height: 180px;
             border-radius: 50%;
-            background: #e2e8f0;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 10px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-            overflow: hidden;
+            background: #e2e8f0; /* Fallback */
         }
+
         .gauge-fill {
-            position: absolute;
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%);
-            transform: rotate(0deg);
-            transition: transform 0.5s ease-in-out; /* Smooth transition for the gauge fill */
+            background: conic-gradient(var(--fill-color) 0deg, #e2e8f0 0deg);
+            transition: background 0.5s ease-in-out;
         }
+
         .gauge-inner-circle {
+            position: absolute;
             width: 135px;
             height: 135px;
             border-radius: 50%;
@@ -166,8 +165,8 @@
             font-weight: bold;
             color: #333;
             z-index: 2;
-            position: relative;
         }
+
         .gauge-value {
             font-size: 1.5rem;
             font-weight: bold;
@@ -183,12 +182,6 @@
             color: #777;
             font-weight: normal;
         }
-
-        .gauge-fill-temp { background: #38b2ac; }
-        .gauge-fill-cod { background: #ef4444; }
-        .gauge-fill-bod { background: #f97316; }
-        .gauge-fill-tss { background: #6366f1; }
-        .gauge-fill-turbidity { background: #10b981; }
 
         .device-card {
             background: rgba(255, 255, 255, 0.3);
@@ -472,30 +465,48 @@
         };
 
         const parameterInfo = {
-            temperature: { id: "temperature", label: "Temperature", unit: "°C", colorClass: 'gauge-fill-temp' },
-            cod: { id: "cod", label: "COD", unit: "mg/L", colorClass: 'gauge-fill-cod' },
-            bod: { id: "bod", label: "BOD", unit: "mg/L", colorClass: 'gauge-fill-bod' },
-            tss: { id: "tss", label: "TSS", unit: "mg/L", colorClass: 'gauge-fill-tss' },
-            turbidity: { id: "turbidity", label: "Turbidity", unit: "NTU", colorClass: 'gauge-fill-turbidity' },
+            temperature: { id: "temperature", label: "Temperature", unit: "°C", limits: { warning: 30, danger: 35 } },
+            cod: { id: "cod", label: "COD", unit: "mg/L", limits: { warning: 100, danger: 250 } },
+            bod: { id: "bod", label: "BOD", unit: "mg/L", limits: { warning: 40, danger: 100 } },
+            tss: { id: "tss", label: "TSS", unit: "mg/L", limits: { warning: 50, danger: 150 } },
+            turbidity: { id: "turbidity", label: "Turbidity", unit: "NTU", limits: { warning: 5, danger: 50 } },
         };
+
+        const statusColors = {
+            normal: '#38b2ac',
+            warning: '#f97316',
+            danger: '#ef4444'
+        };
+
+        function getGaugeStatus(value, limits) {
+            if (value >= limits.danger) {
+                return 'danger';
+            } else if (value >= limits.warning) {
+                return 'warning';
+            } else {
+                return 'normal';
+            }
+        }
 
         function calculateGaugeFill(value, maxValue) {
             let percentage = (value / maxValue) * 100;
             if (percentage > 100) percentage = 100;
             if (percentage < 0) percentage = 0;
-            return (percentage * 3.6);
+            return (percentage * 3.6); // Convert percentage to degrees
         }
 
-        function updateOrCreateGaugeCard(id, label, unit, value, fillClass) {
+        function updateOrCreateGaugeCard(id, label, unit, value, limits) {
             let cardElement = document.getElementById(`${id}-gauge-card`);
-            const fillAngle = (typeof value === 'number' && value > 0) ? calculateGaugeFill(value, maxValues[id]) : 0;
+            const fillAngle = calculateGaugeFill(value, maxValues[id]);
             const displayValue = (typeof value === 'number') ? value.toFixed(2) : '0.00';
+            const status = getGaugeStatus(value, limits);
+            const fillColor = statusColors[status];
 
             if (!cardElement) {
                 const cardHtml = `
                     <div id="${id}-gauge-card" class="gauge-card shadow-lg flex-1 min-w-40 max-w-xs">
                         <div class="gauge-container">
-                            <div class="gauge-fill ${fillClass}" style="transform: rotate(${fillAngle}deg);"></div>
+                            <div class="gauge-fill" style="--fill-color: ${fillColor}; background: conic-gradient(${fillColor} ${fillAngle}deg, #e2e8f0 ${fillAngle}deg);"></div>
                             <div class="gauge-inner-circle">
                                 <span class="gauge-value">${displayValue}</span>
                                 <span class="gauge-unit">${unit}</span>
@@ -508,8 +519,9 @@
             } else {
                 const gaugeFill = cardElement.querySelector('.gauge-fill');
                 const gaugeValueSpan = cardElement.querySelector('.gauge-value');
+                
                 if (gaugeFill) {
-                    gaugeFill.style.transform = `rotate(${fillAngle}deg)`;
+                    gaugeFill.style.background = `conic-gradient(${fillColor} ${fillAngle}deg, #e2e8f0 ${fillAngle}deg)`;
                 }
                 if (gaugeValueSpan) {
                     gaugeValueSpan.textContent = displayValue;
@@ -590,7 +602,7 @@
                     : 0;
                 
                 updateOrCreateDeviceStatusCard(info.id, info.label, value, info.unit, isDataRecentFlag);
-                updateOrCreateGaugeCard(info.id, info.label, info.unit, isDataRecentFlag ? value : 0, info.colorClass);
+                updateOrCreateGaugeCard(info.id, info.label, info.unit, isDataRecentFlag ? value : 0, info.limits);
             });
 
             if (currentDashboardView === "main" && !isDataRecentFlag) {
@@ -608,11 +620,10 @@
                 const response = await fetch(historyUrl);
                 const csvText = await response.text();
                 const parsedData = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-                // Parse and sort the data immediately after fetching
                 historicalData = parsedData.data.map(row => ({
                     ...row,
                     timestamp: new Date(row.timestamp) 
-                })).sort((a, b) => a.timestamp - b.timestamp); // Sort from old to new
+                })).sort((a, b) => a.timestamp - b.timestamp);
             } catch (error) {
                 console.error("Error fetching historical data:", error);
                 historicalData = [];
@@ -622,7 +633,7 @@
         function showGraph(parameterId, parameterLabel) {
             modalTitle.textContent = `${parameterLabel} - Historical Data`;
             graphModal.dataset.parameter = parameterId;
-            updateChart(1); // Default to 1 day view
+            updateChart(1);
             graphModal.classList.add('show');
         }
         
@@ -686,8 +697,6 @@
             });
         }
 
-
-        // --- Login/Logout Logic ---
         function showLoginPage() {
             loginPage.classList.remove("hidden");
             dashboardContent.classList.add("hidden");
@@ -700,7 +709,7 @@
             
             fetchData();
             fetchDataInterval = setInterval(fetchData, 5000);
-            fetchHistoricalData(); // Fetch historical data on login
+            fetchHistoricalData();
         }
 
         loginButton.addEventListener("click", () => {
@@ -724,7 +733,6 @@
             window.location.href = historyUrl;
         });
         
-        // --- Dashboard Navigation & Modal Logic ---
         function setDashboardView(view) {
             currentDashboardView = view;
             dashboardMainTitle.textContent = view === "main" 
