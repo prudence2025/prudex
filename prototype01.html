@@ -16,16 +16,9 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            
-            /* --- CORRECTED BACKGROUND IMAGE --- */
-            /* 1. Set the background image URL */
-            /* Note: Your original URL might not work. I've used a placeholder. Replace it with your valid image URL. */
-            background-image: url("https://prudenceeng.lk/wp-content/uploads/2025/08/download-2.jpg"); 
-            /* 2. Make the image cover the entire screen */
+            background-image: url("https://prudenceeng.lk/wp-content/uploads/2025/08/download.jpg"); 
             background-size: cover; 
-            /* 3. Center the image */
             background-position: center; 
-            /* 4. Keep the image fixed in place while scrolling */
             background-attachment: fixed; 
         }
         
@@ -146,45 +139,60 @@
             width: 180px;
             height: 180px;
             border-radius: 50%;
-            background: conic-gradient(#e2e8f0 0deg, #e2e8f0 360deg);
+            background: #e2e8f0;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 10px;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .gauge-fill {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%);
+            transform: rotate(0deg);
+            transition: transform 0.5s ease;
         }
         .gauge-inner-circle {
             width: 135px;
             height: 135px;
             border-radius: 50%;
-            /* Changed background to be slightly transparent */
             background-color: rgba(240, 242, 245, 0.8);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 2.25rem;
+            font-size: 1.5rem;
             font-weight: bold;
             color: #333;
+            z-index: 2;
+            position: relative;
+        }
+        .gauge-value {
+            font-size: 1.5rem;
+            font-weight: bold;
         }
         .gauge-label {
-            font-size: 1.35em;
+            font-size: 1.1em;
             color: #555;
             margin-top: 5px;
             font-weight: 600;
         }
         .gauge-unit {
-            font-size: 1.05em;
+            font-size: 0.9em;
             color: #777;
             font-weight: normal;
         }
 
         /* Dynamic gauge fill colors */
-        .gauge-fill-temp { background: conic-gradient(from 0deg, #38b2ac var(--fill-angle), #e2e8f0 var(--fill-angle)); }
-        .gauge-fill-cod { background: conic-gradient(from 0deg, #ef4444 var(--fill-angle), #e2e8f0 var(--fill-angle)); }
-        .gauge-fill-bod { background: conic-gradient(from 0deg, #f97316 var(--fill-angle), #e2e8f0 var(--fill-angle)); }
-        .gauge-fill-tss { background: conic-gradient(from 0deg, #6366f1 var(--fill-angle), #e2e8f0 var(--fill-angle)); }
-        .gauge-fill-turbidity { background: conic-gradient(from 0deg, #10b981 var(--fill-angle), #e2e8f0 var(--fill-angle)); }
+        .gauge-fill-temp { background: #38b2ac; }
+        .gauge-fill-cod { background: #ef4444; }
+        .gauge-fill-bod { background: #f97316; }
+        .gauge-fill-tss { background: #6366f1; }
+        .gauge-fill-turbidity { background: #10b981; }
 
         /* Device status card styling */
         .device-card {
@@ -283,6 +291,9 @@
             background-clip: text;
             color: transparent;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -306,7 +317,7 @@
                         <a href="#" class="dropdown-item" data-dashboard="galle">Factory X Galle</a>
                     </div>
                 </div>
-                <button class="nav-button">Download</button>
+                <button id="download-button" class="nav-button">Download</button>
                 <button id="logout-button" class="nav-button">Logout</button>
             </div>
         </header>
@@ -345,6 +356,8 @@
         const deviceStatusContainer = document.getElementById("device-status-container");
         const gaugesContainer = document.getElementById("gauges-container");
 
+        const downloadButton = document.getElementById("download-button"); 
+        
         const dashboardNavButton = document.getElementById("dashboard-nav-button");
         const dashboardDropdownContent = document.getElementById("dashboard-dropdown-content");
         const dropdownItems = document.querySelectorAll(".dropdown-item");
@@ -375,13 +388,13 @@
          * Calculates the fill percentage as an angle (0-360 degrees) for a circular gauge.
          * @param {number} value - The current reading value.
          * @param {number} maxValue - The maximum expected value for the gauge.
-         * @returns {string} - The angle in degrees (e.g., "180.0") as a string.
+         * @returns {number} - The angle in degrees.
          */
         function calculateGaugeFill(value, maxValue) {
             let percentage = (value / maxValue) * 100;
             if (percentage > 100) percentage = 100;
             if (percentage < 0) percentage = 0;
-            return (percentage * 3.6).toFixed(1);
+            return (percentage * 3.6);
         }
 
         /**
@@ -394,16 +407,17 @@
          */
         function updateOrCreateGaugeCard(id, label, unit, value, fillClass) {
             let cardElement = document.getElementById(`${id}-gauge-card`);
-            const fillAngle = (typeof value === 'number') ? calculateGaugeFill(value, maxValues[id]) : '0';
-            const displayValue = (typeof value === 'number') ? value.toFixed(2) : 'N/A';
+            const fillAngle = (typeof value === 'number' && value > 0) ? calculateGaugeFill(value, maxValues[id]) : 0;
+            const displayValue = (typeof value === 'number') ? value.toFixed(2) : '0.00';
 
             if (!cardElement) {
                 // If the card doesn't exist, create it
                 const cardHtml = `
                     <div id="${id}-gauge-card" class="gauge-card shadow-lg flex-1 min-w-40 max-w-xs">
-                        <div class="gauge-container ${fillClass}" style="--fill-angle: ${fillAngle}deg;">
+                        <div class="gauge-container">
+                            <div class="gauge-fill ${fillClass}" style="transform: rotate(${fillAngle}deg);"></div>
                             <div class="gauge-inner-circle">
-                                <span id="${id}-value">${displayValue}</span>
+                                <span class="gauge-value">${displayValue}</span>
                                 <span class="gauge-unit">${unit}</span>
                             </div>
                         </div>
@@ -413,13 +427,11 @@
                 gaugesContainer.insertAdjacentHTML('beforeend', cardHtml);
             } else {
                 // If card exists, update its values
-                const gaugeContainer = cardElement.querySelector('.gauge-container');
-                const gaugeValueSpan = cardElement.querySelector(`#${id}-value`);
+                const gaugeFill = cardElement.querySelector('.gauge-fill');
+                const gaugeValueSpan = cardElement.querySelector('.gauge-value');
 
-                if (gaugeContainer) {
-                    gaugeContainer.style.setProperty('--fill-angle', `${fillAngle}deg`);
-                    // Ensure the fillClass is correctly applied/updated
-                    gaugeContainer.className = `gauge-container ${fillClass}`;
+                if (gaugeFill) {
+                    gaugeFill.style.transform = `rotate(${fillAngle}deg)`;
                 }
                 if (gaugeValueSpan) {
                     gaugeValueSpan.textContent = displayValue;
@@ -457,11 +469,30 @@
                 deviceStatusContainer.insertAdjacentHTML('beforeend', cardHtml);
             } else {
                 // If card exists, update its content
-                const contentDiv = cardElement.querySelector('.value-display') || cardElement.querySelector('.disconnected-text');
-                if (contentDiv) {
-                    contentDiv.outerHTML = contentHtml; // Replace the entire content div to switch between value/disconnected
-                }
+                cardElement.innerHTML = `
+                    <div class="device-name">${label} Sensor</div>
+                    ${contentHtml}
+                `;
             }
+        }
+
+        /**
+         * Checks if the data is recent (within 15 seconds of Sri Lankan time)
+         * @param {string} timestamp - The timestamp from the API
+         * @returns {boolean} - True if data is recent
+         */
+        function isDataRecent(timestamp) {
+            if (!timestamp) return false;
+            
+            // Create date objects for both the API timestamp and current time
+            const apiTime = new Date(timestamp);
+            const currentTime = new Date();
+            
+            // Calculate the difference in seconds
+            const timeDifference = (currentTime - apiTime) / 1000;
+            
+            // Return true if data is less than 15 seconds old
+            return timeDifference < 15;
         }
 
         /**
@@ -469,10 +500,9 @@
          */
         async function fetchData() {
             let latestItem = null;
+            let isDataRecentFlag = false;
 
-            // Handle dashboard-specific content
             if (currentDashboardView === "main") {
-                // Show placeholders for main dashboard initially if empty
                 if (deviceStatusContainer.children.length === 0 || (deviceStatusContainer.children.length === 1 && deviceStatusContainer.children[0].tagName === 'P')) {
                     deviceStatusContainer.innerHTML = `<p class="col-span-full text-gray-600">Loading device status...</p>`;
                 }
@@ -480,87 +510,69 @@
                     gaugesContainer.innerHTML = `<p class="col-span-full text-gray-600">Loading live readings...</p>`;
                 }
 
-                let response;
-                let retries = 0;
-                const maxRetries = 5;
-                const baseDelay = 1000;
-
                 try {
-                    while (retries <= maxRetries) {
-                        try {
-                            response = await fetch(backendUrl);
-                            if (response.ok) {
-                                break;
-                            }
-                        } catch (fetchError) {
-                            console.error(`Fetch attempt ${retries + 1} failed:`, fetchError);
-                        }
-
-                        if (retries < maxRetries) {
-                            const delay = baseDelay * Math.pow(2, retries);
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                        }
-                        retries++;
-                    }
-
-                    if (!response || !response.ok) {
-                        throw new Error(`Failed to fetch data after ${maxRetries} retries. Status: ${response ? response.status : 'N/A'}`);
+                    const response = await fetch(backendUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch data. Status: ${response.status}`);
                     }
 
                     const data = await response.json();
-                    latestItem = Array.isArray(data) ? data[data.length - 1] : data;
+                    latestItem = data;
+                    
+                    // Check if data is recent
+                    isDataRecentFlag = isDataRecent(latestItem.timestamp);
 
                 } catch (error) {
                     console.error("Error fetching or processing data:", error);
-                    // latestItem remains null if fetch fails, which will trigger disconnected/zero states
+                    isDataRecentFlag = false;
                 }
             } else {
-                // For Kandy/Galle, always clear and show "No data available"
                 deviceStatusContainer.innerHTML = `<p class="col-span-full text-gray-600">No data available for ${currentDashboardView} dashboard.</p>`;
                 gaugesContainer.innerHTML = `<p class="col-span-full text-gray-600">No data available for ${currentDashboardView} dashboard.</p>`;
-                return; // Exit early if not main dashboard
+                return;
             }
 
-            let isDataRecent = false;
-            if (latestItem && latestItem.timestamp) {
-                const timestampMs = new Date(latestItem.timestamp).getTime();
-                const currentTimeMs = Date.now();
-                if ((currentTimeMs - timestampMs) / 1000 < 30) {
-                    isDataRecent = true;
-                }
-            }
-
-            // --- Update Device Status Section ---
-            // Clear content if it was a placeholder
+            // Clear loading messages
             if (deviceStatusContainer.children.length === 1 && deviceStatusContainer.children[0].tagName === 'P') {
-                 deviceStatusContainer.innerHTML = "";
+                deviceStatusContainer.innerHTML = "";
             }
-            Object.values(parameterInfo).forEach(info => {
-                const value = latestItem && latestItem[info.id] !== undefined ? latestItem[info.id] : 'N/A';
-                updateOrCreateDeviceStatusCard(info.id, info.label, value, info.unit, isDataRecent);
-            });
-
-            // --- Update Live Readings (Gauges) Section ---
-            // Clear content if it was a placeholder
             if (gaugesContainer.children.length === 1 && gaugesContainer.children[0].tagName === 'P') {
                 gaugesContainer.innerHTML = "";
             }
+
+            // Update both sections
             Object.values(parameterInfo).forEach(info => {
-                let valueForGauge = 0;
-                if (isDataRecent && latestItem && latestItem[info.id] !== undefined) {
-                    valueForGauge = latestItem[info.id];
-                }
-                updateOrCreateGaugeCard(info.id, info.label, info.unit, valueForGauge, info.colorClass);
+                const value = (isDataRecentFlag && latestItem && latestItem[info.id] !== undefined) 
+                    ? parseFloat(latestItem[info.id]) 
+                    : 0;
+                
+                // Update device status cards
+                updateOrCreateDeviceStatusCard(
+                    info.id, 
+                    info.label, 
+                    value, 
+                    info.unit, 
+                    isDataRecentFlag
+                );
+                
+                // Update gauge cards (always show 0 if data is not recent)
+                updateOrCreateGaugeCard(
+                    info.id, 
+                    info.label, 
+                    info.unit, 
+                    isDataRecentFlag ? value : 0, 
+                    info.colorClass
+                );
             });
 
-            // Display an error message if main dashboard is selected and no data was fetched/recent
-            if (currentDashboardView === "main" && (!latestItem || !isDataRecent)) {
-                // Only display general error if individual cards haven't been rendered yet
+            // Show error message if no recent data
+            if (currentDashboardView === "main" && !isDataRecentFlag) {
                 if (deviceStatusContainer.children.length === 0) {
-                    deviceStatusContainer.innerHTML = `<p class="col-span-full text-red-500">Error: No recent data received. Displaying disconnected status.</p>`;
+                    deviceStatusContainer.innerHTML = `<p class="col-span-full text-red-500">No recent data received. Displaying disconnected status.</p>`;
                 }
                 if (gaugesContainer.children.length === 0) {
-                    gaugesContainer.innerHTML = `<p class="col-span-full text-red-500">Error: No recent data to display. Gauges showing zero values.</p>`;
+                    gaugesContainer.innerHTML = `<p class="col-span-full text-red-500">No recent data to display. Gauges showing zero values.</p>`;
                 }
             }
         }
@@ -568,19 +580,14 @@
         // --- Login/Logout Logic ---
         function showLoginPage() {
             loginPage.classList.remove("hidden");
-            loginPage.style.display = 'flex';
             dashboardContent.classList.add("hidden");
-            dashboardContent.style.display = 'none';
             clearInterval(fetchDataInterval);
         }
 
         function showDashboardPage() {
             loginPage.classList.add("hidden");
-            loginPage.style.display = 'none';
             dashboardContent.classList.remove("hidden");
-            dashboardContent.style.display = 'flex';
             
-            // Re-render based on currentDashboardView
             fetchData();
             clearInterval(fetchDataInterval);
             fetchDataInterval = setInterval(fetchData, 5000);
@@ -603,6 +610,10 @@
             showLoginPage();
         });
 
+        downloadButton.addEventListener("click", () => {
+            window.location.href = "https://api.prudex.net/download";
+        });
+
         // --- Dashboard Navigation Logic ---
         function setDashboardView(view) {
             currentDashboardView = view;
@@ -613,24 +624,21 @@
             } else if (view === "galle") {
                 dashboardMainTitle.textContent = "Factory X Galle Dashboard";
             }
-            fetchData(); // Immediately re-fetch/update for the new view
-            dashboardDropdownContent.classList.remove('show'); // Hide dropdown after selection
+            fetchData();
+            dashboardDropdownContent.classList.remove('show');
         }
 
-        // Event listener for Dashboard navigation button to toggle dropdown
         dashboardNavButton.addEventListener("click", (e) => {
-            e.stopPropagation(); // Prevent document click from closing it immediately
+            e.stopPropagation();
             dashboardDropdownContent.classList.toggle('show');
         });
 
-        // Event listener to close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!dashboardNavButton.contains(e.target) && !dashboardDropdownContent.contains(e.target)) {
                 dashboardDropdownContent.classList.remove('show');
             }
         });
 
-        // Event listeners for dropdown items
         dropdownItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -638,8 +646,7 @@
             });
         });
 
-        // Initial page state check (e.g., if user is already "logged in") can go here
-        showLoginPage(); // Start with the login page by default
+        showLoginPage();
 
     </script>
 </body>
