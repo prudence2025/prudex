@@ -506,7 +506,8 @@
             </div>
             <div class="modal-body">
                 <div class="filter-buttons">
-                    <button data-days="1" class="active">1 Day</button>
+                    <button data-hours="1" class="active">1 Hour</button>
+                    <button data-days="1">1 Day</button>
                     <button data-days="7">7 Days</button>
                     <button data-days="30">30 Days</button>
                 </div>
@@ -780,19 +781,37 @@
         function showGraph(parameterId, parameterLabel) {
             modalTitle.textContent = `${parameterLabel} - Historical Data`;
             historyModal.dataset.parameter = parameterId;
-            updateChart(1); // Default to 1 day view
+            
+            // Reset all buttons to inactive state first
+            filterButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Set 1 Hour button as active by default
+            const oneHourButton = document.querySelector('button[data-hours="1"]');
+            if (oneHourButton) {
+                oneHourButton.classList.add('active');
+            }
+            
+            updateChart(1, 'hours'); // Default to 1 hour view
             historyModal.classList.add('show');
         }
 
         /**
          * ## MODIFICATION: New function to update the chart with filtered data ##
          */
-        function updateChart(days) {
+        function updateChart(timeValue, timeUnit = 'days') {
             const parameterId = historyModal.dataset.parameter;
             if (!parameterId || historicalData.length === 0) return;
 
             const now = new Date();
-            const cutoffDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+            let cutoffDate;
+            
+            if (timeUnit === 'hours') {
+                cutoffDate = new Date(now.getTime() - (timeValue * 60 * 60 * 1000));
+            } else {
+                cutoffDate = new Date(now.getTime() - (timeValue * 24 * 60 * 60 * 1000));
+            }
 
             const filteredData = historicalData.filter(row => 
                 row.timestamp >= cutoffDate && row[parameterId] !== undefined && row[parameterId] !== ''
@@ -833,9 +852,23 @@
                 }
             });
             
+            // First, remove 'active' class from all buttons
             filterButtons.forEach(button => {
-                button.classList.toggle('active', parseInt(button.dataset.days) === days);
+                button.classList.remove('active');
             });
+            
+            // Then, add 'active' class only to the selected button
+            filterButtons.forEach(button => {
+                if (timeUnit === 'hours' && button.dataset.hours && parseInt(button.dataset.hours) === timeValue) {
+                    button.classList.add('active');
+                } else if (timeUnit === 'days' && button.dataset.days && parseInt(button.dataset.days) === timeValue) {
+                    button.classList.add('active');
+                }
+            });
+            
+            // Debug logging to help troubleshoot
+            console.log(`Chart updated: ${timeValue} ${timeUnit}`);
+            console.log(`Active button should be: ${timeValue} ${timeUnit}`);
         }
 
 
@@ -907,7 +940,11 @@
         });
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
-                updateChart(parseInt(button.dataset.days));
+                if (button.dataset.hours) {
+                    updateChart(parseInt(button.dataset.hours), 'hours');
+                } else if (button.dataset.days) {
+                    updateChart(parseInt(button.dataset.days), 'days');
+                }
             });
         });
 
