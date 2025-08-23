@@ -59,6 +59,8 @@
             color: transparent;
             margin-right: 40px;
         }
+
+
         .nav-button {
             background-color: #007bff;
             color: white;
@@ -126,11 +128,14 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
             border-radius: 15px;
-            padding: 20px;
-            margin: 10px;
+            padding: 30px;
+            margin: 15px;
             min-width: 180px;
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             text-align: center;
+            flex: 1 1 calc(20% - 30px);
+            max-width: calc(20% - 30px);
+            box-sizing: border-box;
         }
         .gauge-card:hover {
             transform: translateY(-5px);
@@ -181,6 +186,34 @@
             font-weight: normal;
         }
 
+        /* ## MODIFICATION: New gauge color classes ## */
+        .gauge-green {
+            --fill-color: #10b981 !important;
+        }
+        .gauge-orange {
+            --fill-color: #f97316 !important;
+        }
+
+        /* ## MODIFICATION: Updated gauges container for 5 per line layout ## */
+        #gauges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        /* ## MODIFICATION: Updated device status container for 5 per line layout ## */
+        #device-status-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: stretch;
+            width: 100%;
+        }
+
         /* Device status card styling */
         .device-card {
             background: rgba(255, 255, 255, 0.3);
@@ -188,7 +221,7 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
             border-radius: 15px;
-            padding: 15px;
+            padding: 25px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
@@ -196,6 +229,10 @@
             position: relative;
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             cursor: pointer;
+            flex: 1 1 calc(20% - 20px);
+            max-width: calc(20% - 20px);
+            box-sizing: border-box;
+            margin: 10px;
         }
         .device-card:hover {
             transform: translateY(-5px);
@@ -363,6 +400,51 @@
             background-color: #007bff;
             color: white;
         }
+
+        /* ## MODIFICATION: Responsive breakpoints for 5-per-line layout ## */
+        @media (max-width: 1400px) {
+            .gauge-card {
+                flex: 1 1 calc(25% - 22.5px);
+                max-width: calc(25% - 22.5px);
+            }
+            .device-card {
+                flex: 1 1 calc(25% - 15px);
+                max-width: calc(25% - 15px);
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .gauge-card {
+                flex: 1 1 calc(33.33% - 20px);
+                max-width: calc(33.33% - 20px);
+            }
+            .device-card {
+                flex: 1 1 calc(33.33% - 13.33px);
+                max-width: calc(33.33% - 13.33px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .gauge-card {
+                flex: 1 1 calc(50% - 15px);
+                max-width: calc(50% - 15px);
+            }
+            .device-card {
+                flex: 1 1 calc(50% - 10px);
+                max-width: calc(50% - 10px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .gauge-card {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+            .device-card {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -395,6 +477,7 @@
                 </div>
                 <button id="logout-button" class="nav-button">Logout</button>
             </div>
+
         </header>
 
         <div class="container mx-auto p-4 max-w-7xl mt-16">
@@ -403,12 +486,12 @@
             </h1>
 
             <div class="glass-panel">
-                <div id="device-status-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 justify-center">
+                <div id="device-status-container">
                 </div>
             </div>
 
             <div class="glass-panel">
-                <div id="gauges-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 justify-center">
+                <div id="gauges-container">
                 </div>
             </div>
         </div>
@@ -465,6 +548,8 @@
 
         let currentDashboardView = "main";
         let fetchDataInterval;
+
+
 
         const maxValues = {
             temperature: 50,
@@ -527,14 +612,20 @@
             let cardElement = document.getElementById(`${id}-gauge-card`);
             const fillAngle = calculateGaugeFill(value, maxValues[id]);
             const displayValue = (typeof value === 'number') ? value.toFixed(2) : '0.00';
-            const status = getGaugeStatus(id, value, limits);
-            const fillColor = statusColors[status];
+            
+            // ## MODIFICATION: Apply new color scheme ##
+            let gaugeColorClass = '';
+            if (id === 'ph') {
+                gaugeColorClass = 'gauge-orange';
+            } else {
+                gaugeColorClass = 'gauge-green';
+            }
 
             if (!cardElement) {
                 const cardHtml = `
-                    <div id="${id}-gauge-card" class="gauge-card shadow-lg flex-1 min-w-40 max-w-xs">
+                    <div id="${id}-gauge-card" class="gauge-card shadow-lg ${gaugeColorClass}">
                         <div class="gauge-container">
-                            <div class="gauge-fill" style="--fill-color: ${fillColor}; background: conic-gradient(${fillColor} ${fillAngle}deg, #e2e8f0 ${fillAngle}deg);"></div>
+                            <div class="gauge-fill" style="background: conic-gradient(var(--fill-color) ${fillAngle}deg, #e2e8f0 ${fillAngle}deg);"></div>
                             <div class="gauge-inner-circle">
                                 <span class="gauge-value">${displayValue}</span>
                                 <span class="gauge-unit">${unit}</span>
@@ -549,7 +640,7 @@
                 const gaugeValueSpan = cardElement.querySelector('.gauge-value');
                 
                 if (gaugeFill) {
-                    gaugeFill.style.background = `conic-gradient(${fillColor} ${fillAngle}deg, #e2e8f0 ${fillAngle}deg)`;
+                    gaugeFill.style.background = `conic-gradient(var(--fill-color) ${fillAngle}deg, #e2e8f0 ${fillAngle}deg)`;
                 }
                 if (gaugeValueSpan) {
                     gaugeValueSpan.textContent = displayValue;
@@ -626,9 +717,12 @@
 
             // ## MODIFICATION: Improved handling for disconnected state ##
             if (!anyDataIsRecent && paramsToDisplay.length > 0) {
-                const message = `<p class="col-span-full text-red-600 font-semibold text-lg">All systems are currently offline. Please check device connections.</p>`;
-                deviceStatusContainer.innerHTML = message;
-                gaugesContainer.innerHTML = ''; // Keep gauges empty
+                // Show individual sensor status instead of general offline message
+                paramsToDisplay.forEach(paramId => {
+                    const info = parameterInfo[paramId];
+                    updateOrCreateDeviceStatusCard(info.id, info.label, 0, info.unit, false);
+                    updateOrCreateGaugeCard(info.id, info.label, info.unit, 0, info.limits);
+                });
                 return;
             }
 
@@ -816,6 +910,8 @@
                 updateChart(parseInt(button.dataset.days));
             });
         });
+
+
 
         showLoginPage();
 
