@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Factory X Main Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ## MODIFICATION: Added libraries for advanced chart handling and CSV parsing ## -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
+        /* Base styles for the body */
         body {
             font-family: 'Inter', sans-serif;
             color: #333;
@@ -24,10 +26,12 @@
             background-attachment: fixed;
         }
         
+        /* Styling for the main heading */
         h1 {
             margin-bottom: 30px;
         }
 
+        /* Header styling */
         header {
             background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(10px);
@@ -100,6 +104,7 @@
             background-color: #f1f1f1;
         }
 
+        /* Glassy effect for the data panels */
         .glass-panel {
             background: rgba(255, 255, 255, 0.3);
             backdrop-filter: blur(10px);
@@ -110,6 +115,7 @@
             margin-bottom: 25px;
         }
 
+        /* ## MODIFICATION: Updated gauge styles for conic-gradient design ## */
         .gauge-card {
             display: flex;
             flex-direction: column;
@@ -130,7 +136,6 @@
             transform: translateY(-5px);
             box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.15);
         }
-
         .gauge-container {
             position: relative;
             width: 180px;
@@ -140,17 +145,14 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 10px;
-            background: #e2e8f0; /* Fallback */
         }
-
         .gauge-fill {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: conic-gradient(var(--fill-color) 0deg, #e2e8f0 0deg);
+            background: conic-gradient(var(--fill-color, #e2e8f0) 0deg, #e2e8f0 0deg);
             transition: background 0.5s ease-in-out;
         }
-
         .gauge-inner-circle {
             position: absolute;
             width: 135px;
@@ -161,12 +163,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
             z-index: 2;
         }
-
         .gauge-value {
             font-size: 1.5rem;
             font-weight: bold;
@@ -183,6 +181,7 @@
             font-weight: normal;
         }
 
+        /* Device status card styling */
         .device-card {
             background: rgba(255, 255, 255, 0.3);
             backdrop-filter: blur(10px);
@@ -221,6 +220,7 @@
             margin-top: 5px;
         }
 
+        /* Login page styles */
         .login-container {
             display: flex;
             flex-direction: column;
@@ -283,7 +283,7 @@
             display: none;
         }
 
-        /* Modal Styles */
+        /* ## MODIFICATION: New modal styles inspired by the provided file ## */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -341,6 +341,10 @@
         .modal-close-button:hover {
             color: #000;
         }
+        .filter-buttons {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
         .filter-buttons button {
             background-color: #e5e7eb;
             color: #374151;
@@ -363,7 +367,7 @@
 </head>
 <body>
     <div id="login-page" class="login-container">
-        <h2 class="login-title">Factory X</h2>
+        <h2 class="login-title">PrudeX</h2>
         <input type="text" id="username" placeholder="Username" class="login-input">
         <input type="password" id="password" placeholder="Password" class="login-input">
         <button id="login-button" class="login-button">Login</button>
@@ -382,50 +386,55 @@
                         <a href="#" class="dropdown-item" data-dashboard="galle">Factory X Galle</a>
                     </div>
                 </div>
-                <button id="download-button" class="nav-button">Download</button>
+                <div class="relative dropdown">
+                    <button id="download-nav-button" class="nav-button">Download</button>
+                    <div id="download-dropdown-content" class="dropdown-content">
+                        <a href="https://api.prudex.net/download" target="_blank" class="dropdown-item">Factory X Kandy</a>
+                        <a href="https://api1.prudex.net/download" target="_blank" class="dropdown-item">Factory X Galle</a>
+                    </div>
+                </div>
                 <button id="logout-button" class="nav-button">Logout</button>
             </div>
         </header>
 
         <div class="container mx-auto p-4 max-w-7xl mt-16">
             <h1 id="dashboard-main-title" class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 mb-16">
-                Factory X Main Dashboard
+                 Factory X Main Dashboard
             </h1>
 
             <div class="glass-panel">
-                <div id="device-status-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 justify-center">
+                <div id="device-status-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 justify-center">
                 </div>
             </div>
 
             <div class="glass-panel">
-                <div id="gauges-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 justify-center">
+                <div id="gauges-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 justify-center">
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Graph Modal -->
-    <div id="graph-modal" class="modal-overlay">
+
+    <!-- ## MODIFICATION: Replaced old modal with new design ## -->
+    <div id="history-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modal-title" class="modal-title">Historical Data</h2>
                 <button id="modal-close-button" class="modal-close-button">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="filter-buttons text-center mb-4">
+                <div class="filter-buttons">
                     <button data-days="1" class="active">1 Day</button>
                     <button data-days="7">7 Days</button>
                     <button data-days="30">30 Days</button>
                 </div>
-                <canvas id="historical-chart"></canvas>
+                <canvas id="history-chart"></canvas>
             </div>
         </div>
     </div>
-
+    
     <script>
-        // API endpoints
-        const backendUrl = "https://api.prudex.net/latest";
-        const historyUrl = "https://api.prudex.net/download";
+        const backendUrlMain = "https://api.prudex.net/latest";
+        const backendUrlGalle = "https://api1.prudex.net/latest";
 
         // DOM element references
         const loginPage = document.getElementById("login-page");
@@ -440,66 +449,85 @@
         const deviceStatusContainer = document.getElementById("device-status-container");
         const gaugesContainer = document.getElementById("gauges-container");
 
-        const downloadButton = document.getElementById("download-button");
+        const downloadNavButton = document.getElementById("download-nav-button");
+        const downloadDropdownContent = document.getElementById("download-dropdown-content");
         const dashboardNavButton = document.getElementById("dashboard-nav-button");
         const dashboardDropdownContent = document.getElementById("dashboard-dropdown-content");
         const dropdownItems = document.querySelectorAll(".dropdown-item");
-
-        // Modal and chart elements
-        const graphModal = document.getElementById('graph-modal');
+        
+        // ## MODIFICATION: Updated modal and chart elements ##
+        const historyModal = document.getElementById("history-modal");
         const modalCloseButton = document.getElementById('modal-close-button');
-        const modalTitle = document.getElementById('modal-title');
+        const modalTitle = document.getElementById("modal-title");
         const filterButtons = document.querySelectorAll('.filter-buttons button');
-        let historicalChart = null;
-        let historicalData = [];
+        let historyChart = null;
+        let historicalData = []; // To store parsed CSV data
 
-        let currentDashboardView = "main"; // Default view
-        let fetchDataInterval; // Variable to store the interval ID
+        let currentDashboardView = "main";
+        let fetchDataInterval;
 
         const maxValues = {
             temperature: 50,
             cod: 500,
             bod: 300,
             tss: 300,
-            turbidity: 1000
+            turbidity: 1000,
+            ph: 14 
         };
 
+        // ## MODIFICATION: Added warning/danger limits for gauge colors ##
         const parameterInfo = {
             temperature: { id: "temperature", label: "Temperature", unit: "°C", limits: { warning: 30, danger: 35 } },
             cod: { id: "cod", label: "COD", unit: "mg/L", limits: { warning: 100, danger: 250 } },
             bod: { id: "bod", label: "BOD", unit: "mg/L", limits: { warning: 40, danger: 100 } },
             tss: { id: "tss", label: "TSS", unit: "mg/L", limits: { warning: 50, danger: 150 } },
             turbidity: { id: "turbidity", label: "Turbidity", unit: "NTU", limits: { warning: 5, danger: 50 } },
+            ph: { id: "ph", label: "pH", unit: "", limits: { warning: 8.5, danger: 9.5 } } // Also checks for low pH
         };
-
+        
         const statusColors = {
             normal: '#38b2ac',
             warning: '#f97316',
             danger: '#ef4444'
         };
 
-        function getGaugeStatus(value, limits) {
-            if (value >= limits.danger) {
-                return 'danger';
-            } else if (value >= limits.warning) {
-                return 'warning';
-            } else {
+        const dashboardParameters = {
+            main: ['temperature', 'cod', 'bod', 'tss', 'turbidity', 'ph'],
+            kandy: ['temperature', 'cod', 'bod', 'tss', 'turbidity'],
+            galle: ['ph']
+        };
+
+        /**
+         * ## MODIFICATION: New function to determine gauge color status ##
+         * Determines the status (normal, warning, danger) based on value and limits.
+         */
+        function getGaugeStatus(id, value, limits) {
+            if (id === 'ph') {
+                // pH has both high and low danger/warning zones
+                if (value >= limits.danger || value <= (14 - limits.danger)) return 'danger';
+                if (value >= limits.warning || value <= (14 - limits.warning)) return 'warning';
                 return 'normal';
             }
+            if (value >= limits.danger) return 'danger';
+            if (value >= limits.warning) return 'warning';
+            return 'normal';
         }
 
         function calculateGaugeFill(value, maxValue) {
             let percentage = (value / maxValue) * 100;
             if (percentage > 100) percentage = 100;
             if (percentage < 0) percentage = 0;
-            return (percentage * 3.6); // Convert percentage to degrees
+            return (percentage * 3.6);
         }
 
+        /**
+         * ## MODIFICATION: Updated gauge creation logic to use new design ##
+         */
         function updateOrCreateGaugeCard(id, label, unit, value, limits) {
             let cardElement = document.getElementById(`${id}-gauge-card`);
             const fillAngle = calculateGaugeFill(value, maxValues[id]);
             const displayValue = (typeof value === 'number') ? value.toFixed(2) : '0.00';
-            const status = getGaugeStatus(value, limits);
+            const status = getGaugeStatus(id, value, limits);
             const fillColor = statusColors[status];
 
             if (!cardElement) {
@@ -531,19 +559,23 @@
 
         function updateOrCreateDeviceStatusCard(id, label, value, unit, isConnected) {
             let cardElement = document.getElementById(`${id}-device-card`);
-            let contentHtml = isConnected && typeof value === 'number'
+            let contentHtml = (isConnected && typeof value === 'number')
                 ? `<div class="value-display">${value.toFixed(2)} ${unit}</div>`
                 : `<div class="disconnected-text">Disconnected</div>`;
 
             if (!cardElement) {
                 const cardHtml = `
-                    <div id="${id}-device-card" class="device-card" data-parameter="${id}" data-label="${label}">
+                    <div id="${id}-device-card" class="device-card" data-parameter="${id}">
                         <div class="device-name">${label} Sensor</div>
                         ${contentHtml}
                     </div>
                 `;
                 deviceStatusContainer.insertAdjacentHTML('beforeend', cardHtml);
-                document.getElementById(`${id}-device-card`).addEventListener('click', () => showGraph(id, label));
+                
+                const newCard = document.getElementById(`${id}-device-card`);
+                newCard.addEventListener('click', () => {
+                    showGraph(id, label);
+                });
             } else {
                 cardElement.innerHTML = `
                     <div class="device-name">${label} Sensor</div>
@@ -556,137 +588,152 @@
             if (!timestamp) return false;
             const apiTime = new Date(timestamp);
             const currentTime = new Date();
-            const timeDifference = (currentTime - apiTime) / 1000;
-            return timeDifference < 15;
+            return (currentTime - apiTime) / 1000 < 15;
         }
 
         async function fetchData() {
-            let latestItem = null;
-            let isDataRecentFlag = false;
+            let latestData = {};
+            const dataSourcesStatus = { main: false, galle: false };
 
-            if (currentDashboardView === "main") {
-                if (deviceStatusContainer.children.length === 0) {
-                    deviceStatusContainer.innerHTML = `<p class="col-span-full text-gray-600">Loading device status...</p>`;
+            try {
+                const fetchPromises = [];
+                if (['main', 'kandy'].includes(currentDashboardView)) {
+                    fetchPromises.push(fetch(backendUrlMain).then(res => res.json()).then(data => ({ source: 'main', data })));
                 }
-                if (gaugesContainer.children.length === 0) {
-                    gaugesContainer.innerHTML = `<p class="col-span-full text-gray-600">Loading live readings...</p>`;
+                if (['main', 'galle'].includes(currentDashboardView)) {
+                    fetchPromises.push(fetch(backendUrlGalle).then(res => res.json()).then(data => ({ source: 'galle', data })));
                 }
 
-                try {
-                    const response = await fetch(backendUrl);
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch data. Status: ${response.status}`);
+                const results = await Promise.allSettled(fetchPromises);
+                results.forEach(result => {
+                    if (result.status === 'fulfilled') {
+                        const { source, data } = result.value;
+                        if (isDataRecent(data.timestamp)) {
+                            dataSourcesStatus[source] = true;
+                            latestData = { ...latestData, ...data };
+                        }
                     }
-                    latestItem = await response.json();
-                    isDataRecentFlag = isDataRecent(latestItem.timestamp);
-                } catch (error) {
-                    console.error("Error fetching or processing data:", error);
-                    isDataRecentFlag = false;
-                }
-            } else {
-                deviceStatusContainer.innerHTML = `<p class="col-span-full text-gray-600">No data available for ${currentDashboardView} dashboard.</p>`;
-                gaugesContainer.innerHTML = `<p class="col-span-full text-gray-600">No data available for ${currentDashboardView} dashboard.</p>`;
+                });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+            
+            deviceStatusContainer.innerHTML = '';
+            gaugesContainer.innerHTML = '';
+
+            const paramsToDisplay = dashboardParameters[currentDashboardView] || [];
+            const anyDataIsRecent = Object.values(dataSourcesStatus).some(status => status);
+
+            // ## MODIFICATION: Improved handling for disconnected state ##
+            if (!anyDataIsRecent && paramsToDisplay.length > 0) {
+                const message = `<p class="col-span-full text-red-600 font-semibold text-lg">All systems are currently offline. Please check device connections.</p>`;
+                deviceStatusContainer.innerHTML = message;
+                gaugesContainer.innerHTML = ''; // Keep gauges empty
                 return;
             }
 
-            if (deviceStatusContainer.children.length === 1 && deviceStatusContainer.children[0].tagName === 'P') {
-                deviceStatusContainer.innerHTML = "";
-            }
-            if (gaugesContainer.children.length === 1 && gaugesContainer.children[0].tagName === 'P') {
-                gaugesContainer.innerHTML = "";
-            }
+            paramsToDisplay.forEach(paramId => {
+                const info = parameterInfo[paramId];
+                const source = (paramId === 'ph') ? 'galle' : 'main';
+                const isRecent = dataSourcesStatus[source];
+                const value = (isRecent && latestData[info.id] !== undefined) ? parseFloat(latestData[info.id]) : 0;
 
-            Object.values(parameterInfo).forEach(info => {
-                const value = (isDataRecentFlag && latestItem && latestItem[info.id] !== undefined) 
-                    ? parseFloat(latestItem[info.id]) 
-                    : 0;
-                
-                updateOrCreateDeviceStatusCard(info.id, info.label, value, info.unit, isDataRecentFlag);
-                updateOrCreateGaugeCard(info.id, info.label, info.unit, isDataRecentFlag ? value : 0, info.limits);
+                updateOrCreateDeviceStatusCard(info.id, info.label, value, info.unit, isRecent);
+                updateOrCreateGaugeCard(info.id, info.label, info.unit, isRecent ? value : 0, info.limits);
             });
-
-            if (currentDashboardView === "main" && !isDataRecentFlag) {
-                if (deviceStatusContainer.children.length === 0) {
-                    deviceStatusContainer.innerHTML = `<p class="col-span-full text-red-500">No recent data received. Displaying disconnected status.</p>`;
-                }
-                if (gaugesContainer.children.length === 0) {
-                    gaugesContainer.innerHTML = `<p class="col-span-full text-red-500">No recent data to display. Gauges showing zero values.</p>`;
-                }
-            }
         }
-        
-        async function fetchHistoricalData() {
+
+        /**
+         * ## MODIFICATION: New function to fetch and parse all historical data at once ##
+         */
+        async function fetchAllHistoricalData() {
             try {
-                const response = await fetch(historyUrl);
-                const csvText = await response.text();
-                const parsedData = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-                historicalData = parsedData.data.map(row => ({
+                const [kandyResponse, galleResponse] = await Promise.all([
+                    fetch("https://api.prudex.net/download"),
+                    fetch("https://api1.prudex.net/download")
+                ]);
+                const kandyText = await kandyResponse.text();
+                const galleText = await galleResponse.text();
+
+                const kandyData = Papa.parse(kandyText, { header: true, skipEmptyLines: true }).data;
+                const galleData = Papa.parse(galleText, { header: true, skipEmptyLines: true }).data;
+
+                // Combine data, assuming timestamps are the key
+                const combinedData = {};
+                [...kandyData, ...galleData].forEach(row => {
+                    if (row.timestamp) {
+                        if (!combinedData[row.timestamp]) {
+                            combinedData[row.timestamp] = {};
+                        }
+                        Object.assign(combinedData[row.timestamp], row);
+                    }
+                });
+                
+                historicalData = Object.values(combinedData).map(row => ({
                     ...row,
-                    timestamp: new Date(row.timestamp) 
+                    timestamp: new Date(row.timestamp)
                 })).sort((a, b) => a.timestamp - b.timestamp);
+
             } catch (error) {
                 console.error("Error fetching historical data:", error);
                 historicalData = [];
             }
         }
 
+        /**
+         * ## MODIFICATION: New function to show the redesigned graph modal ##
+         */
         function showGraph(parameterId, parameterLabel) {
             modalTitle.textContent = `${parameterLabel} - Historical Data`;
-            graphModal.dataset.parameter = parameterId;
-            updateChart(1);
-            graphModal.classList.add('show');
+            historyModal.dataset.parameter = parameterId;
+            updateChart(1); // Default to 1 day view
+            historyModal.classList.add('show');
         }
-        
+
+        /**
+         * ## MODIFICATION: New function to update the chart with filtered data ##
+         */
         function updateChart(days) {
-            const parameterId = graphModal.dataset.parameter;
+            const parameterId = historyModal.dataset.parameter;
             if (!parameterId || historicalData.length === 0) return;
 
             const now = new Date();
             const cutoffDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
 
-            const filteredData = historicalData.filter(row => row.timestamp >= cutoffDate && row[parameterId] !== undefined);
+            const filteredData = historicalData.filter(row => 
+                row.timestamp >= cutoffDate && row[parameterId] !== undefined && row[parameterId] !== ''
+            );
 
-            const chartData = {
-                labels: filteredData.map(row => row.timestamp),
-                datasets: [{
-                    label: parameterInfo[parameterId].label,
-                    data: filteredData.map(row => parseFloat(row[parameterId])),
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 2,
-                    tension: 0.1,
-                    fill: true
-                }]
-            };
-
-            if (historicalChart) {
-                historicalChart.destroy();
+            if (historyChart) {
+                historyChart.destroy();
             }
 
-            const ctx = document.getElementById('historical-chart').getContext('2d');
-            historicalChart = new Chart(ctx, {
+            const ctx = document.getElementById('history-chart').getContext('2d');
+            historyChart = new Chart(ctx, {
                 type: 'line',
-                data: chartData,
+                data: {
+                    labels: filteredData.map(row => row.timestamp),
+                    datasets: [{
+                        label: parameterInfo[parameterId].label,
+                        data: filteredData.map(row => parseFloat(row[parameterId])),
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
                 options: {
                     responsive: true,
                     scales: {
                         x: {
                             type: 'time',
-                            time: {
-                                unit: 'hour',
-                                tooltipFormat: 'MMM d, yyyy, h:mm a'
-                            },
-                            title: {
-                                display: true,
-                                text: 'Time'
-                            }
+                            time: { unit: 'hour', tooltipFormat: 'MMM d, yyyy, h:mm a' },
+                            title: { display: true, text: 'Time' }
                         },
                         y: {
-                            title: {
-                                display: true,
-                                text: `Value (${parameterInfo[parameterId].unit})`
-                            }
+                            title: { display: true, text: `Value (${parameterInfo[parameterId].unit})` }
                         }
                     }
                 }
@@ -697,6 +744,8 @@
             });
         }
 
+
+        // --- Login/Logout & Page Setup Logic ---
         function showLoginPage() {
             loginPage.classList.remove("hidden");
             dashboardContent.classList.add("hidden");
@@ -708,15 +757,13 @@
             dashboardContent.classList.remove("hidden");
             
             fetchData();
+            clearInterval(fetchDataInterval);
             fetchDataInterval = setInterval(fetchData, 5000);
-            fetchHistoricalData();
+            fetchAllHistoricalData(); // Fetch historical data on login
         }
 
         loginButton.addEventListener("click", () => {
-            const username = usernameInput.value;
-            const password = passwordInput.value;
-
-            if (username === "admin" && password === "2025") {
+            if (usernameInput.value === "admin" && passwordInput.value === "2025") {
                 loginErrorMessage.classList.add("hidden");
                 showDashboardPage();
             } else {
@@ -725,19 +772,12 @@
             }
         });
 
-        logoutButton.addEventListener("click", () => {
-            showLoginPage();
-        });
+        logoutButton.addEventListener("click", showLoginPage);
 
-        downloadButton.addEventListener("click", () => {
-            window.location.href = historyUrl;
-        });
-        
         function setDashboardView(view) {
             currentDashboardView = view;
-            dashboardMainTitle.textContent = view === "main" 
-                ? "Factory X Main Dashboard" 
-                : `Factory X ${view.charAt(0).toUpperCase() + view.slice(1)} Dashboard`;
+            const viewTitle = view.charAt(0).toUpperCase() + view.slice(1);
+            dashboardMainTitle.textContent = `Factory X ${viewTitle} Dashboard`;
             fetchData();
             dashboardDropdownContent.classList.remove('show');
         }
@@ -747,33 +787,33 @@
             dashboardDropdownContent.classList.toggle('show');
         });
 
+        downloadNavButton.addEventListener("click", (e) => {
+            e.stopPropagation();
+            downloadDropdownContent.classList.toggle('show');
+        });
+
         document.addEventListener('click', (e) => {
-            if (!dashboardNavButton.contains(e.target) && !dashboardDropdownContent.contains(e.target)) {
-                dashboardDropdownContent.classList.remove('show');
-            }
+            if (!dashboardNavButton.contains(e.target)) dashboardDropdownContent.classList.remove('show');
+            if (!downloadNavButton.contains(e.target)) downloadDropdownContent.classList.remove('show');
         });
 
         dropdownItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                setDashboardView(e.target.dataset.dashboard);
-            });
-        });
-
-        modalCloseButton.addEventListener('click', () => {
-            graphModal.classList.remove('show');
-        });
-
-        graphModal.addEventListener('click', (e) => {
-            if (e.target === graphModal) {
-                graphModal.classList.remove('show');
+            if (item.dataset.dashboard) {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    setDashboardView(e.target.dataset.dashboard);
+                });
             }
         });
-        
+
+        // --- New Modal Event Listeners ---
+        modalCloseButton.addEventListener('click', () => historyModal.classList.remove('show'));
+        historyModal.addEventListener('click', (e) => {
+            if (e.target === historyModal) historyModal.classList.remove('show');
+        });
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
-                const days = parseInt(button.dataset.days);
-                updateChart(days);
+                updateChart(parseInt(button.dataset.days));
             });
         });
 
