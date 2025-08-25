@@ -400,6 +400,24 @@
             background-color: #007bff;
             color: white;
         }
+        .alerts-button {
+            background-color: #dc2626 !important;
+            color: white !important;
+            position: relative;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+            transition: all 0.3s ease;
+        }
+        .alerts-button:hover {
+            background-color: #b91c1c !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
+        }
+        .alerts-button.active {
+            background-color: #991b1b !important;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+        }
 
         /* ## MODIFICATION: Responsive breakpoints for 5-per-line layout ## */
         @media (max-width: 1400px) {
@@ -473,8 +491,10 @@
                     <div id="download-dropdown-content" class="dropdown-content">
                         <a href="https://api.prudex.net/download" target="_blank" class="dropdown-item">Factory X Kandy</a>
                         <a href="https://api1.prudex.net/download" target="_blank" class="dropdown-item">Factory X Galle</a>
+                        <a href="https://api2.prudex.net/download" target="_blank" class="dropdown-item">Factory X Conductivity</a>
                     </div>
                 </div>
+                <button id="ask-prudex-button" class="nav-button">Ask PrudeX</button>
                 <button id="logout-button" class="nav-button">Logout</button>
             </div>
 
@@ -510,8 +530,26 @@
                     <button data-days="1">1 Day</button>
                     <button data-days="7">7 Days</button>
                     <button data-days="30">30 Days</button>
+                    <button id="alerts-button" class="alerts-button" title="Show only data points that are out of normal range (warnings and alerts)">Alerts</button>
                 </div>
                 <canvas id="history-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ask PrudeX Modal -->
+    <div id="ask-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Ask PrudeX</h2>
+                <button id="ask-close-button" class="modal-close-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="ask-chat" class="glass-panel" style="max-height: 420px; overflow-y: auto; text-align: left; padding: 16px;"></div>
+                <div class="mb-4" style="display:flex; gap: 8px; align-items: center; margin-top: 12px;">
+                    <input id="ask-input" type="text" placeholder="Ask anything about your data..." class="login-input" style="flex:1; margin:0; height: 44px;" />
+                    <button id="ask-submit" class="login-button" style="margin:0; width: auto; min-width: 84px; padding: 8px 14px; font-size: 14px;">Ask</button>
+                </div>
             </div>
         </div>
     </div>
@@ -519,6 +557,7 @@
     <script>
         const backendUrlMain = "https://api.prudex.net/latest";
         const backendUrlGalle = "https://api1.prudex.net/latest";
+        const backendUrlConductivity = "https://api2.prudex.net/latest";
 
         // DOM element references
         const loginPage = document.getElementById("login-page");
@@ -538,6 +577,7 @@
         const dashboardNavButton = document.getElementById("dashboard-nav-button");
         const dashboardDropdownContent = document.getElementById("dashboard-dropdown-content");
         const dropdownItems = document.querySelectorAll(".dropdown-item");
+        const askPrudexButton = document.getElementById("ask-prudex-button");
         
         // ## MODIFICATION: Updated modal and chart elements ##
         const historyModal = document.getElementById("history-modal");
@@ -546,6 +586,14 @@
         const filterButtons = document.querySelectorAll('.filter-buttons button');
         let historyChart = null;
         let historicalData = []; // To store parsed CSV data
+        let isAlertsMode = false; // Track if alerts mode is active
+
+        // Ask PrudeX elements
+        const askModal = document.getElementById('ask-modal');
+        const askCloseButton = document.getElementById('ask-close-button');
+        const askInput = document.getElementById('ask-input');
+        const askSubmit = document.getElementById('ask-submit');
+        const askChat = document.getElementById('ask-chat');
 
         let currentDashboardView = "main";
         let fetchDataInterval;
@@ -558,7 +606,8 @@
             bod: 300,
             tss: 300,
             turbidity: 1000,
-            ph: 14 
+            ph: 14,
+            conductivity: 50000
         };
 
         // ## MODIFICATION: Added warning/danger limits for gauge colors ##
@@ -568,7 +617,8 @@
             bod: { id: "bod", label: "BOD", unit: "mg/L", limits: { warning: 40, danger: 100 } },
             tss: { id: "tss", label: "TSS", unit: "mg/L", limits: { warning: 50, danger: 150 } },
             turbidity: { id: "turbidity", label: "Turbidity", unit: "NTU", limits: { warning: 5, danger: 50 } },
-            ph: { id: "ph", label: "pH", unit: "", limits: { warning: 8.5, danger: 9.5 } } // Also checks for low pH
+            ph: { id: "ph", label: "pH", unit: "", limits: { warning: 8.5, danger: 9.5 } }, // Also checks for low pH
+            conductivity: { id: "conductivity", label: "Conductivity", unit: "µS/cm", limits: { warning: 1500, danger: 5000 } }
         };
         
         const statusColors = {
@@ -578,9 +628,9 @@
         };
 
         const dashboardParameters = {
-            main: ['temperature', 'cod', 'bod', 'tss', 'turbidity', 'ph'],
+            main: ['temperature', 'cod', 'bod', 'tss', 'turbidity', 'ph', 'conductivity'],
             kandy: ['temperature', 'cod', 'bod', 'tss', 'turbidity'],
-            galle: ['ph']
+            galle: ['ph', 'conductivity']
         };
 
         /**
@@ -616,7 +666,7 @@
             
             // ## MODIFICATION: Apply new color scheme ##
             let gaugeColorClass = '';
-            if (id === 'ph') {
+            if (id === 'ph' || id === 'conductivity') {
                 gaugeColorClass = 'gauge-orange';
             } else {
                 gaugeColorClass = 'gauge-green';
@@ -685,7 +735,7 @@
 
         async function fetchData() {
             let latestData = {};
-            const dataSourcesStatus = { main: false, galle: false };
+            const dataSourcesStatus = { main: false, galle: false, conductivity: false };
 
             try {
                 const fetchPromises = [];
@@ -694,6 +744,9 @@
                 }
                 if (['main', 'galle'].includes(currentDashboardView)) {
                     fetchPromises.push(fetch(backendUrlGalle).then(res => res.json()).then(data => ({ source: 'galle', data })));
+                }
+                if (['main', 'galle'].includes(currentDashboardView)) {
+                    fetchPromises.push(fetch(backendUrlConductivity).then(res => res.json()).then(data => ({ source: 'conductivity', data })));
                 }
 
                 const results = await Promise.allSettled(fetchPromises);
@@ -729,7 +782,7 @@
 
             paramsToDisplay.forEach(paramId => {
                 const info = parameterInfo[paramId];
-                const source = (paramId === 'ph') ? 'galle' : 'main';
+                const source = (paramId === 'ph') ? 'galle' : (paramId === 'conductivity' ? 'conductivity' : 'main');
                 const isRecent = dataSourcesStatus[source];
                 const value = (isRecent && latestData[info.id] !== undefined) ? parseFloat(latestData[info.id]) : 0;
 
@@ -743,19 +796,22 @@
          */
         async function fetchAllHistoricalData() {
             try {
-                const [kandyResponse, galleResponse] = await Promise.all([
+                const [kandyResponse, galleResponse, conductivityResponse] = await Promise.all([
                     fetch("https://api.prudex.net/download"),
-                    fetch("https://api1.prudex.net/download")
+                    fetch("https://api1.prudex.net/download"),
+                    fetch("https://api2.prudex.net/download")
                 ]);
                 const kandyText = await kandyResponse.text();
                 const galleText = await galleResponse.text();
+                const conductivityText = await conductivityResponse.text();
 
                 const kandyData = Papa.parse(kandyText, { header: true, skipEmptyLines: true }).data;
                 const galleData = Papa.parse(galleText, { header: true, skipEmptyLines: true }).data;
+                const conductivityData = Papa.parse(conductivityText, { header: true, skipEmptyLines: true }).data;
 
                 // Combine data, assuming timestamps are the key
                 const combinedData = {};
-                [...kandyData, ...galleData].forEach(row => {
+                [...kandyData, ...galleData, ...conductivityData].forEach(row => {
                     if (row.timestamp) {
                         if (!combinedData[row.timestamp]) {
                             combinedData[row.timestamp] = {};
@@ -781,6 +837,12 @@
         function showGraph(parameterId, parameterLabel) {
             modalTitle.textContent = `${parameterLabel} - Historical Data`;
             historyModal.dataset.parameter = parameterId;
+            
+            // Reset alerts mode
+            isAlertsMode = false;
+            const alertsButton = document.getElementById('alerts-button');
+            alertsButton.classList.remove('active');
+            alertsButton.textContent = 'Alerts';
             
             // Reset all buttons to inactive state first
             filterButtons.forEach(button => {
@@ -813,9 +875,26 @@
                 cutoffDate = new Date(now.getTime() - (timeValue * 24 * 60 * 60 * 1000));
             }
 
-            const filteredData = historicalData.filter(row => 
+            let filteredData = historicalData.filter(row => 
                 row.timestamp >= cutoffDate && row[parameterId] !== undefined && row[parameterId] !== ''
             );
+
+            // If alerts mode is active, filter for out-of-range data only
+            if (isAlertsMode) {
+                filteredData = filteredData.filter(row => {
+                    const value = parseFloat(row[parameterId]);
+                    const limits = parameterInfo[parameterId].limits;
+                    
+                    if (parameterId === 'ph') {
+                        // pH has both high and low danger/warning zones
+                        return value >= limits.danger || value <= (14 - limits.danger) || 
+                               value >= limits.warning || value <= (14 - limits.warning);
+                    } else {
+                        // Other parameters only have high limits
+                        return value >= limits.warning;
+                    }
+                });
+            }
 
             if (historyChart) {
                 historyChart.destroy();
@@ -827,12 +906,12 @@
                 data: {
                     labels: filteredData.map(row => row.timestamp),
                     datasets: [{
-                        label: parameterInfo[parameterId].label,
+                        label: isAlertsMode ? `${parameterInfo[parameterId].label} - Alerts` : parameterInfo[parameterId].label,
                         data: filteredData.map(row => parseFloat(row[parameterId])),
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderColor: isAlertsMode ? '#dc2626' : '#007bff',
+                        backgroundColor: isAlertsMode ? 'rgba(220, 38, 38, 0.1)' : 'rgba(0, 123, 255, 0.1)',
                         borderWidth: 2,
-                        pointRadius: 2,
+                        pointRadius: isAlertsMode ? 4 : 2,
                         tension: 0.1,
                         fill: true
                     }]
@@ -869,6 +948,32 @@
             // Debug logging to help troubleshoot
             console.log(`Chart updated: ${timeValue} ${timeUnit}`);
             console.log(`Active button should be: ${timeValue} ${timeUnit}`);
+        }
+
+        /**
+         * ## NEW: Function to toggle alerts mode ##
+         */
+        function toggleAlertsMode() {
+            isAlertsMode = !isAlertsMode;
+            const alertsButton = document.getElementById('alerts-button');
+            
+            if (isAlertsMode) {
+                alertsButton.classList.add('active');
+                alertsButton.textContent = 'Show All';
+            } else {
+                alertsButton.classList.remove('active');
+                alertsButton.textContent = 'Alerts';
+            }
+            
+            // Get current active time filter and update chart
+            const activeButton = document.querySelector('.filter-buttons button.active');
+            if (activeButton) {
+                if (activeButton.dataset.hours) {
+                    updateChart(parseInt(activeButton.dataset.hours), 'hours');
+                } else if (activeButton.dataset.days) {
+                    updateChart(parseInt(activeButton.dataset.days), 'days');
+                }
+            }
         }
 
 
@@ -919,6 +1024,13 @@
             downloadDropdownContent.classList.toggle('show');
         });
 
+        // Ask PrudeX open
+        askPrudexButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            askInput.value = '';
+            askModal.classList.add('show');
+        });
+
         document.addEventListener('click', (e) => {
             if (!dashboardNavButton.contains(e.target)) dashboardDropdownContent.classList.remove('show');
             if (!downloadNavButton.contains(e.target)) downloadDropdownContent.classList.remove('show');
@@ -947,6 +1059,215 @@
                 }
             });
         });
+
+        // Add event listener for alerts button
+        document.getElementById('alerts-button').addEventListener('click', () => {
+            toggleAlertsMode();
+        });
+
+        // Ask PrudeX handlers
+        askCloseButton.addEventListener('click', () => askModal.classList.remove('show'));
+        askModal.addEventListener('click', (e) => { if (e.target === askModal) askModal.classList.remove('show'); });
+        askSubmit.addEventListener('click', () => handleAsk());
+        askInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAsk(); });
+
+        function handleAsk() {
+            const question = (askInput.value || '').trim();
+            if (!question) return;
+            appendChat('user', question);
+            if (!historicalData || historicalData.length === 0) {
+                appendChat('assistant', 'No historical data loaded yet. Please wait a moment and try again.');
+                return;
+            }
+            const response = answerQuestion(question);
+            appendChat('assistant', response);
+            askInput.value = '';
+        }
+
+        function appendChat(role, content) {
+            const wrapper = document.createElement('div');
+            wrapper.style.marginBottom = '12px';
+            const bubble = document.createElement('div');
+            bubble.style.display = 'inline-block';
+            bubble.style.padding = '10px 12px';
+            bubble.style.borderRadius = '12px';
+            bubble.style.maxWidth = '90%';
+            bubble.style.whiteSpace = 'pre-wrap';
+            bubble.style.wordBreak = 'break-word';
+            if (role === 'user') {
+                bubble.style.background = 'rgba(0,123,255,0.1)';
+                bubble.style.border = '1px solid rgba(0,123,255,0.3)';
+            } else {
+                bubble.style.background = 'rgba(16,185,129,0.1)';
+                bubble.style.border = '1px solid rgba(16,185,129,0.3)';
+            }
+            bubble.innerHTML = content;
+            wrapper.appendChild(bubble);
+            askChat.appendChild(wrapper);
+            askChat.scrollTop = askChat.scrollHeight;
+        }
+
+        function parseTimeWindow(question) {
+            const hoursMatch = question.match(/last\s+(\d+)\s*hour/i);
+            const daysMatch = question.match(/last\s+(\d+)\s*day/i);
+            if (hoursMatch) return { amount: parseInt(hoursMatch[1]), unit: 'hours' };
+            if (daysMatch) return { amount: parseInt(daysMatch[1]), unit: 'days' };
+            // default: 7 days
+            return { amount: 7, unit: 'days' };
+        }
+
+        function filterByTimeWindow(data, windowSpec) {
+            const now = new Date();
+            const cutoff = new Date(now.getTime() - (windowSpec.unit === 'hours' ? windowSpec.amount * 3600000 : windowSpec.amount * 86400000));
+            return data.filter(row => row.timestamp && row.timestamp >= cutoff);
+        }
+
+        function findParameterId(question) {
+            const q = question.toLowerCase();
+            const entries = Object.entries(parameterInfo);
+            for (const [id, info] of entries) {
+                const label = info.label.toLowerCase();
+                if (q.includes(id) || q.includes(label)) return id;
+            }
+            // common synonyms
+            if (q.includes('conduct') || q.includes('ec')) return 'conductivity';
+            return null;
+        }
+
+        function computeStat(values, kind) {
+            if (values.length === 0) return null;
+            if (kind === 'max') return Math.max(...values);
+            if (kind === 'min') return Math.min(...values);
+            if (kind === 'avg') return values.reduce((a,b)=>a+b,0) / values.length;
+            return null;
+        }
+
+        function detectStatKind(question) {
+            const q = question.toLowerCase();
+            if (q.includes('highest') || q.includes('max')) return 'max';
+            if (q.includes('lowest') || q.includes('min')) return 'min';
+            if (q.includes('average') || q.includes('avg') || q.includes('mean')) return 'avg';
+            // default to average
+            return 'avg';
+        }
+
+        function answerQuestion(question) {
+            const thresholdSpec = parseThresholdSpec(question);
+            const paramId = thresholdSpec?.paramId || findParameterId(question);
+            if (!paramId || !parameterInfo[paramId]) {
+                return 'Sorry, I could not identify which parameter you are asking about.';
+            }
+            const specificDate = parseSpecificDate(question);
+            const listIntent = detectListIntent(question);
+            const windowSpec = specificDate ? { amount: 36500, unit: 'days' } : parseTimeWindow(question);
+            const filtered = filterByTimeWindow(historicalData, windowSpec);
+            const dateFiltered = specificDate ? filtered.filter(r => sameDay(r.timestamp, specificDate)) : filtered;
+
+            // Threshold queries
+            if (thresholdSpec && typeof thresholdSpec.value === 'number') {
+                const comparator = thresholdSpec.comparator;
+                const threshold = thresholdSpec.value;
+                const matches = dateFiltered.filter(r => {
+                    const v = parseFloat(r[paramId]);
+                    if (isNaN(v)) return false;
+                    if (comparator === '>') return v > threshold;
+                    if (comparator === '>=') return v >= threshold;
+                    if (comparator === '<') return v < threshold;
+                    if (comparator === '<=') return v <= threshold;
+                    if (comparator === '==') return v === threshold;
+                    return false;
+                });
+                const unit = parameterInfo[paramId].unit || '';
+                const label = parameterInfo[paramId].label;
+                const whenText = specificDate ? `on ${specificDate.toLocaleDateString()}` : `in last ${windowSpec.amount} ${windowSpec.unit}`;
+                if (matches.length === 0) {
+                    return `No ${label} values ${comparator} ${threshold} ${unit} ${whenText}.`;
+                }
+                const items = matches.map(r => {
+                    const t = r.timestamp;
+                    const v = parseFloat(r[paramId]);
+                    return `• ${t.toLocaleString()} — ${v.toFixed(2)} ${unit}`;
+                }).join('<br/>');
+                return `${matches.length} ${label} readings ${comparator} ${threshold} ${unit} ${whenText}:<br/>${items}`;
+            }
+
+            // Date-specific listing (e.g., "show me 2018/05/01 COD readings")
+            if (specificDate && listIntent) {
+                const unit = parameterInfo[paramId].unit || '';
+                const label = parameterInfo[paramId].label;
+                const matches = dateFiltered.filter(r => r[paramId] !== undefined && r[paramId] !== '');
+                if (matches.length === 0) return `No ${label} readings on ${specificDate.toLocaleDateString()}.`;
+                const items = matches.map(r => {
+                    const t = r.timestamp;
+                    const v = parseFloat(r[paramId]);
+                    if (isNaN(v)) return null;
+                    return `• ${t.toLocaleString()} — ${v.toFixed(2)} ${unit}`;
+                }).filter(Boolean).join('<br/>');
+                return `${matches.length} ${label} readings on ${specificDate.toLocaleDateString()}:<br/>${items}`;
+            }
+
+            // Statistical query (max/min/avg), optionally on a specific date
+            const kind = detectStatKind(question);
+            const values = dateFiltered
+                .map(r => parseFloat(r[paramId]))
+                .filter(v => !isNaN(v));
+            const stat = computeStat(values, kind);
+            if (stat === null) return 'No data available for that query.';
+            const unit = parameterInfo[paramId].unit || '';
+            const label = parameterInfo[paramId].label;
+            const pretty = stat.toFixed(2);
+            const whenText = specificDate ? `on ${specificDate.toLocaleDateString()}` : `in last ${windowSpec.amount} ${windowSpec.unit}`;
+            return `${kind.toUpperCase()} ${label} ${whenText}: <strong>${pretty} ${unit}</strong> (from ${values.length} data points).`;
+        }
+
+        function parseSpecificDate(question) {
+            const ymd = question.match(/(\d{4})[\/-](\d{2})[\/-](\d{2})/);
+            if (ymd) {
+                const y = parseInt(ymd[1]);
+                const m = parseInt(ymd[2]) - 1;
+                const d = parseInt(ymd[3]);
+                return new Date(y, m, d);
+            }
+            const dmy = question.match(/(\d{2})[\/-](\d{2})[\/-](\d{4})/);
+            if (dmy) {
+                const d = parseInt(dmy[1]);
+                const m = parseInt(dmy[2]) - 1;
+                const y = parseInt(dmy[3]);
+                return new Date(y, m, d);
+            }
+            return null;
+        }
+
+        function sameDay(a, b) {
+            return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+        }
+
+        function detectListIntent(question) {
+            const q = question.toLowerCase();
+            return q.includes('show') || q.includes('list') || q.includes('readings') || q.includes('events');
+        }
+
+        function parseThresholdSpec(question) {
+            const q = question.toLowerCase();
+            // detect comparator phrases
+            let comparator = null;
+            if (q.includes('more than') || q.includes('greater than') || q.includes('above')) comparator = '>';
+            if (q.includes('less than') || q.includes('below')) comparator = comparator || '<';
+            if (q.includes('at least')) comparator = comparator || '>=';
+            if (q.includes('at most')) comparator = comparator || '<=';
+            // symbolic comparators
+            if (q.includes('>=')) comparator = '>=';
+            else if (q.includes('<=')) comparator = '<=';
+            else if (q.includes('>')) comparator = '>';
+            else if (q.includes('<')) comparator = '<';
+
+            // extract number
+            const numMatch = q.match(/(-?\d+\.?\d*)/);
+            const value = numMatch ? parseFloat(numMatch[1]) : null;
+            const paramId = findParameterId(question);
+            if (!comparator || value === null || !paramId) return null;
+            return { paramId, comparator, value };
+        }
 
 
 
