@@ -351,6 +351,50 @@
             transform: scale(0.95);
             transition: transform 0.3s;
         }
+        /* Futuristic chat styles */
+        .chat-surface {
+            background: radial-gradient(1200px 600px at 10% -10%, rgba(59,130,246,0.08), transparent 60%),
+                        radial-gradient(1200px 600px at 110% 110%, rgba(20,184,166,0.08), transparent 60%);
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+        .chat-bubble {
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.35);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06), inset 0 0 15px rgba(255,255,255,0.08);
+            backdrop-filter: blur(6px);
+        }
+        .chat-bubble-user {
+            background: linear-gradient(135deg, rgba(59,130,246,0.16), rgba(59,130,246,0.06));
+            border-color: rgba(59,130,246,0.35);
+            color: #0b3b7a;
+        }
+        .chat-bubble-assistant {
+            background: linear-gradient(135deg, rgba(16,185,129,0.16), rgba(16,185,129,0.06));
+            border-color: rgba(16,185,129,0.35);
+            color: #064e3b;
+        }
+        .chat-meta {
+            display: block;
+            font-size: 0.72rem;
+            opacity: 0.7;
+            margin-top: 6px;
+        }
+        .typing-dots {
+            display: inline-flex;
+            gap: 4px;
+            vertical-align: middle;
+        }
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            background: #10b981;
+            opacity: 0.3;
+            animation: blink 1.2s infinite ease-in-out;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
         .modal-overlay.show .modal-content {
             transform: scale(1);
         }
@@ -532,6 +576,16 @@
                     <button data-days="30">30 Days</button>
                     <button id="alerts-button" class="alerts-button" title="Show only data points that are out of normal range (warnings and alerts)">Alerts</button>
                 </div>
+                <!-- Editable alert thresholds -->
+                <div id="alert-threshold-editor" style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:10px;">
+                    <label for="alert-min" style="font-weight:600;">Min</label>
+                    <input id="alert-min" type="number" step="0.01" placeholder="min (optional)" class="login-input" style="max-width:140px; margin:0;"/>
+                    <label for="alert-max" style="font-weight:600;">Max</label>
+                    <input id="alert-max" type="number" step="0.01" placeholder="max (optional)" class="login-input" style="max-width:140px; margin:0;"/>
+                    <button id="apply-alert-thresholds" class="login-button" style="width:auto; padding:8px 14px;">Apply</button>
+                    <span style="font-weight:600; color:#374151;">Safe Range</span>
+                    <button id="clear-alert-thresholds" class="login-button" style="width:auto; padding:8px 14px; background-color:#6b7280;">Clear</button>
+                </div>
                 <canvas id="history-chart"></canvas>
             </div>
         </div>
@@ -545,10 +599,10 @@
                 <button id="ask-close-button" class="modal-close-button">&times;</button>
             </div>
             <div class="modal-body">
-                <div id="ask-chat" class="glass-panel" style="max-height: 420px; overflow-y: auto; text-align: left; padding: 16px;"></div>
+                <div id="ask-chat" class="glass-panel chat-surface" style="max-height: 420px; overflow-y: auto; text-align: left; padding: 16px;"></div>
                 <div class="mb-4" style="display:flex; gap: 8px; align-items: center; margin-top: 12px;">
-                    <input id="ask-input" type="text" placeholder="Ask anything about your data..." class="login-input" style="flex:1; margin:0; height: 44px;" />
-                    <button id="ask-submit" class="login-button" style="margin:0; width: auto; min-width: 84px; padding: 8px 14px; font-size: 14px;">Ask</button>
+                    <input id="ask-input" type="text" placeholder="Ask anything about your data..." class="login-input" style="flex:1; margin:0; height: 44px; border:1px solid rgba(59,130,246,0.3);" />
+                    <button id="ask-submit" class="login-button" style="margin:0; width: auto; min-width: 84px; padding: 10px 16px; font-size: 14px; background: linear-gradient(135deg, #3b82f6, #06b6d4);">Ask</button>
                 </div>
             </div>
         </div>
@@ -587,6 +641,9 @@
         let historyChart = null;
         let historicalData = []; // To store parsed CSV data
         let isAlertsMode = false; // Track if alerts mode is active
+        let customAlertMin = null; // Custom thresholds from editor (active)
+        let customAlertMax = null;
+        const customThresholds = {}; // per-parameter saved thresholds: { [paramId]: { min, max } }
 
         // Ask PrudeX elements
         const askModal = document.getElementById('ask-modal');
@@ -855,6 +912,14 @@
                 oneHourButton.classList.add('active');
             }
             
+            // Reset inputs to empty on open (fresh view)
+            const alertMinInputEl = document.getElementById('alert-min');
+            const alertMaxInputEl = document.getElementById('alert-max');
+            customAlertMin = null;
+            customAlertMax = null;
+            alertMinInputEl.value = '';
+            alertMaxInputEl.value = '';
+            
             updateChart(1, 'hours'); // Default to 1 hour view
             historyModal.classList.add('show');
         }
@@ -879,19 +944,24 @@
                 row.timestamp >= cutoffDate && row[parameterId] !== undefined && row[parameterId] !== ''
             );
 
-            // If alerts mode is active, filter for out-of-range data only
+            // If alerts mode is active, filter for out-of-range data only (supports custom thresholds)
             if (isAlertsMode) {
                 filteredData = filteredData.filter(row => {
                     const value = parseFloat(row[parameterId]);
                     const limits = parameterInfo[parameterId].limits;
+                    const minThresh = (customAlertMin !== null) ? customAlertMin : (parameterId === 'ph' ? (14 - limits.warning) : -Infinity);
+                    const maxThresh = (customAlertMax !== null) ? customAlertMax : limits.warning;
                     
                     if (parameterId === 'ph') {
-                        // pH has both high and low danger/warning zones
-                        return value >= limits.danger || value <= (14 - limits.danger) || 
-                               value >= limits.warning || value <= (14 - limits.warning);
+                        // pH has high and low zones
+                        const high = (customAlertMax !== null ? value >= maxThresh : value >= limits.warning);
+                        const low = (customAlertMin !== null ? value <= minThresh : value <= (14 - limits.warning));
+                        return high || low;
                     } else {
-                        // Other parameters only have high limits
-                        return value >= limits.warning;
+                        // Others: only high by default; include low if custom min provided
+                        const high = (customAlertMax !== null ? value >= maxThresh : value >= limits.warning);
+                        const low = (customAlertMin !== null ? value <= minThresh : false);
+                        return high || low;
                     }
                 });
             }
@@ -899,6 +969,9 @@
             if (historyChart) {
                 historyChart.destroy();
             }
+
+            // Choose x-axis unit dynamically so 7/30 day views show dates on X axis
+            const xUnit = (timeUnit === 'days') ? (timeValue >= 7 ? 'day' : 'hour') : 'hour';
 
             const ctx = document.getElementById('history-chart').getContext('2d');
             historyChart = new Chart(ctx, {
@@ -921,7 +994,11 @@
                     scales: {
                         x: {
                             type: 'time',
-                            time: { unit: 'hour', tooltipFormat: 'MMM d, yyyy, h:mm a' },
+                            time: {
+                                unit: xUnit,
+                                tooltipFormat: 'MMM d, yyyy, h:mm a',
+                                displayFormats: { day: 'MMM d', hour: 'MMM d, h a' }
+                            },
                             title: { display: true, text: 'Time' }
                         },
                         y: {
@@ -983,9 +1060,7 @@
             dashboardContent.classList.add("hidden");
             clearInterval(fetchDataInterval);
         }
-
         function showDashboardPage() {
-            loginPage.classList.add("hidden");
             dashboardContent.classList.remove("hidden");
             
             fetchData();
@@ -994,17 +1069,32 @@
             fetchAllHistoricalData(); // Fetch historical data on login
         }
 
+        // Login handler
         loginButton.addEventListener("click", () => {
-            if (usernameInput.value === "admin" && passwordInput.value === "2025") {
-                loginErrorMessage.classList.add("hidden");
+            const username = (document.getElementById("username").value || '').trim().toLowerCase();
+            const password = (document.getElementById("password").value || '').trim();
+            if (username === "admin" && password === "2025") {
+                document.getElementById("login-error-message").classList.add("hidden");
                 showDashboardPage();
+                loginPage.classList.add("hidden");
             } else {
-                loginErrorMessage.textContent = "Invalid username or password.";
-                loginErrorMessage.classList.remove("hidden");
+                const msg = document.getElementById("login-error-message");
+                msg.textContent = "Invalid username or password.";
+                msg.classList.remove("hidden");
             }
         });
 
-        logoutButton.addEventListener("click", showLoginPage);
+        // Allow pressing Enter to submit login
+        [document.getElementById("username"), document.getElementById("password")].forEach(el => {
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    loginButton.click();
+                }
+            });
+        });
+
+        // Logout reloads to show login again
+        logoutButton.addEventListener("click", () => { window.location.reload(); });
 
         function setDashboardView(view) {
             currentDashboardView = view;
@@ -1065,23 +1155,71 @@
             toggleAlertsMode();
         });
 
+        // Threshold editor handlers
+        const alertMinInput = document.getElementById('alert-min');
+        const alertMaxInput = document.getElementById('alert-max');
+        const applyAlertBtn = document.getElementById('apply-alert-thresholds');
+        const clearAlertBtn = document.getElementById('clear-alert-thresholds');
+
+        function refreshChartForThresholds() {
+            // keep current time filter
+            const activeButton = document.querySelector('.filter-buttons button.active');
+            if (activeButton) {
+                if (activeButton.dataset.hours) {
+                    updateChart(parseInt(activeButton.dataset.hours), 'hours');
+                } else if (activeButton.dataset.days) {
+                    updateChart(parseInt(activeButton.dataset.days), 'days');
+                }
+            } else {
+                updateChart(1, 'hours');
+            }
+        }
+
+        applyAlertBtn.addEventListener('click', () => {
+            const minVal = alertMinInput.value.trim();
+            const maxVal = alertMaxInput.value.trim();
+            customAlertMin = minVal === '' ? null : parseFloat(minVal);
+            customAlertMax = maxVal === '' ? null : parseFloat(maxVal);
+            const pid = historyModal.dataset.parameter;
+            isAlertsMode = true; // switch to alerts view when applying
+            document.getElementById('alerts-button').classList.add('active');
+            document.getElementById('alerts-button').textContent = 'Show All';
+            refreshChartForThresholds();
+        });
+
+        // Removed 'Save Range' button; Safe Range is descriptive label only
+
+        clearAlertBtn.addEventListener('click', () => {
+            customAlertMin = null;
+            customAlertMax = null;
+            alertMinInput.value = '';
+            alertMaxInput.value = '';
+            const pid = historyModal.dataset.parameter;
+            customThresholds[pid] = { min: null, max: null };
+            refreshChartForThresholds();
+        });
+
         // Ask PrudeX handlers
         askCloseButton.addEventListener('click', () => askModal.classList.remove('show'));
         askModal.addEventListener('click', (e) => { if (e.target === askModal) askModal.classList.remove('show'); });
         askSubmit.addEventListener('click', () => handleAsk());
         askInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAsk(); });
 
-        function handleAsk() {
+        async function handleAsk() {
             const question = (askInput.value || '').trim();
             if (!question) return;
             appendChat('user', question);
-            if (!historicalData || historicalData.length === 0) {
-                appendChat('assistant', 'No historical data loaded yet. Please wait a moment and try again.');
-                return;
-            }
-            const response = answerQuestion(question);
-            appendChat('assistant', response);
             askInput.value = '';
+
+            // Local analysis only
+            const thinkingId = appendChat('assistant', '<span class="typing-dots"><span></span><span></span><span></span></span>');
+            try {
+                const answerText = answerQuestion(question);
+                replaceChat(thinkingId, answerText);
+            } catch (err) {
+                const message = (err && err.message) ? err.message : 'Unknown error';
+                replaceChat(thinkingId, `Sorry, I could not process that. (${message})`);
+            }
         }
 
         function appendChat(role, content) {
@@ -1089,135 +1227,55 @@
             wrapper.style.marginBottom = '12px';
             const bubble = document.createElement('div');
             bubble.style.display = 'inline-block';
-            bubble.style.padding = '10px 12px';
-            bubble.style.borderRadius = '12px';
+            bubble.style.padding = '12px 14px';
+            bubble.style.borderRadius = '14px';
             bubble.style.maxWidth = '90%';
             bubble.style.whiteSpace = 'pre-wrap';
             bubble.style.wordBreak = 'break-word';
-            if (role === 'user') {
-                bubble.style.background = 'rgba(0,123,255,0.1)';
-                bubble.style.border = '1px solid rgba(0,123,255,0.3)';
-            } else {
-                bubble.style.background = 'rgba(16,185,129,0.1)';
-                bubble.style.border = '1px solid rgba(16,185,129,0.3)';
-            }
+            bubble.classList.add('chat-bubble');
+            if (role === 'user') bubble.classList.add('chat-bubble-user');
+            else bubble.classList.add('chat-bubble-assistant');
             bubble.innerHTML = content;
             wrapper.appendChild(bubble);
             askChat.appendChild(wrapper);
             askChat.scrollTop = askChat.scrollHeight;
+            const id = `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            wrapper.dataset.id = id;
+            return id;
         }
 
+        function replaceChat(id, newContent) {
+            const node = Array.from(askChat.children).find(el => el.dataset && el.dataset.id === id);
+            if (!node) return;
+            const bubble = node.firstChild;
+            if (bubble) bubble.innerHTML = newContent;
+        }
+
+        // --- Local Q&A analytics ---
         function parseTimeWindow(question) {
             const hoursMatch = question.match(/last\s+(\d+)\s*hour/i);
             const daysMatch = question.match(/last\s+(\d+)\s*day/i);
+            const weekMatch = question.match(/last\s+(\d+)\s*week/i);
+            const monthMatch = question.match(/last\s+(\d+)\s*month/i);
             if (hoursMatch) return { amount: parseInt(hoursMatch[1]), unit: 'hours' };
             if (daysMatch) return { amount: parseInt(daysMatch[1]), unit: 'days' };
-            // default: 7 days
-            return { amount: 7, unit: 'days' };
+            if (weekMatch) return { amount: parseInt(weekMatch[1]) * 7, unit: 'days' };
+            if (monthMatch) return { amount: parseInt(monthMatch[1]) * 30, unit: 'days' };
+            // default: all time (no limit)
+            return null;
         }
 
         function filterByTimeWindow(data, windowSpec) {
             const now = new Date();
+            if (!windowSpec) return data;
             const cutoff = new Date(now.getTime() - (windowSpec.unit === 'hours' ? windowSpec.amount * 3600000 : windowSpec.amount * 86400000));
             return data.filter(row => row.timestamp && row.timestamp >= cutoff);
         }
 
-        function findParameterId(question) {
-            const q = question.toLowerCase();
-            const entries = Object.entries(parameterInfo);
-            for (const [id, info] of entries) {
-                const label = info.label.toLowerCase();
-                if (q.includes(id) || q.includes(label)) return id;
-            }
-            // common synonyms
-            if (q.includes('conduct') || q.includes('ec')) return 'conductivity';
-            return null;
-        }
-
-        function computeStat(values, kind) {
-            if (values.length === 0) return null;
-            if (kind === 'max') return Math.max(...values);
-            if (kind === 'min') return Math.min(...values);
-            if (kind === 'avg') return values.reduce((a,b)=>a+b,0) / values.length;
-            return null;
-        }
-
-        function detectStatKind(question) {
-            const q = question.toLowerCase();
-            if (q.includes('highest') || q.includes('max')) return 'max';
-            if (q.includes('lowest') || q.includes('min')) return 'min';
-            if (q.includes('average') || q.includes('avg') || q.includes('mean')) return 'avg';
-            // default to average
-            return 'avg';
-        }
-
-        function answerQuestion(question) {
-            const thresholdSpec = parseThresholdSpec(question);
-            const paramId = thresholdSpec?.paramId || findParameterId(question);
-            if (!paramId || !parameterInfo[paramId]) {
-                return 'Sorry, I could not identify which parameter you are asking about.';
-            }
-            const specificDate = parseSpecificDate(question);
-            const listIntent = detectListIntent(question);
-            const windowSpec = specificDate ? { amount: 36500, unit: 'days' } : parseTimeWindow(question);
-            const filtered = filterByTimeWindow(historicalData, windowSpec);
-            const dateFiltered = specificDate ? filtered.filter(r => sameDay(r.timestamp, specificDate)) : filtered;
-
-            // Threshold queries
-            if (thresholdSpec && typeof thresholdSpec.value === 'number') {
-                const comparator = thresholdSpec.comparator;
-                const threshold = thresholdSpec.value;
-                const matches = dateFiltered.filter(r => {
-                    const v = parseFloat(r[paramId]);
-                    if (isNaN(v)) return false;
-                    if (comparator === '>') return v > threshold;
-                    if (comparator === '>=') return v >= threshold;
-                    if (comparator === '<') return v < threshold;
-                    if (comparator === '<=') return v <= threshold;
-                    if (comparator === '==') return v === threshold;
-                    return false;
-                });
-                const unit = parameterInfo[paramId].unit || '';
-                const label = parameterInfo[paramId].label;
-                const whenText = specificDate ? `on ${specificDate.toLocaleDateString()}` : `in last ${windowSpec.amount} ${windowSpec.unit}`;
-                if (matches.length === 0) {
-                    return `No ${label} values ${comparator} ${threshold} ${unit} ${whenText}.`;
-                }
-                const items = matches.map(r => {
-                    const t = r.timestamp;
-                    const v = parseFloat(r[paramId]);
-                    return `• ${t.toLocaleString()} — ${v.toFixed(2)} ${unit}`;
-                }).join('<br/>');
-                return `${matches.length} ${label} readings ${comparator} ${threshold} ${unit} ${whenText}:<br/>${items}`;
-            }
-
-            // Date-specific listing (e.g., "show me 2018/05/01 COD readings")
-            if (specificDate && listIntent) {
-                const unit = parameterInfo[paramId].unit || '';
-                const label = parameterInfo[paramId].label;
-                const matches = dateFiltered.filter(r => r[paramId] !== undefined && r[paramId] !== '');
-                if (matches.length === 0) return `No ${label} readings on ${specificDate.toLocaleDateString()}.`;
-                const items = matches.map(r => {
-                    const t = r.timestamp;
-                    const v = parseFloat(r[paramId]);
-                    if (isNaN(v)) return null;
-                    return `• ${t.toLocaleString()} — ${v.toFixed(2)} ${unit}`;
-                }).filter(Boolean).join('<br/>');
-                return `${matches.length} ${label} readings on ${specificDate.toLocaleDateString()}:<br/>${items}`;
-            }
-
-            // Statistical query (max/min/avg), optionally on a specific date
-            const kind = detectStatKind(question);
-            const values = dateFiltered
-                .map(r => parseFloat(r[paramId]))
-                .filter(v => !isNaN(v));
-            const stat = computeStat(values, kind);
-            if (stat === null) return 'No data available for that query.';
-            const unit = parameterInfo[paramId].unit || '';
-            const label = parameterInfo[paramId].label;
-            const pretty = stat.toFixed(2);
-            const whenText = specificDate ? `on ${specificDate.toLocaleDateString()}` : `in last ${windowSpec.amount} ${windowSpec.unit}`;
-            return `${kind.toUpperCase()} ${label} ${whenText}: <strong>${pretty} ${unit}</strong> (from ${values.length} data points).`;
+        function formatWhenText(windowSpec, specificDate) {
+            if (specificDate) return specificDate.toLocaleDateString();
+            if (!windowSpec) return 'all time';
+            return `last ${windowSpec.amount} ${windowSpec.unit}`;
         }
 
         function parseSpecificDate(question) {
@@ -1242,10 +1300,295 @@
             return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
         }
 
+        function findParameterId(question) {
+            const q = question.toLowerCase();
+            for (const [id, info] of Object.entries(parameterInfo)) {
+                if (q.includes(id) || q.includes(info.label.toLowerCase())) return id;
+            }
+            if (q.includes('conduct') || q.includes('ec')) return 'conductivity';
+            return null;
+        }
+
+        function detectStatKind(question) {
+            const q = question.toLowerCase();
+            if (q.includes('highest') || q.includes('max')) return 'max';
+            if (q.includes('lowest') || q.includes('min')) return 'min';
+            if (q.includes('average') || q.includes('avg') || q.includes('mean')) return 'avg';
+            return 'avg';
+        }
+
+        function computeStat(values, kind) {
+            if (values.length === 0) return null;
+            if (kind === 'max') return Math.max(...values);
+            if (kind === 'min') return Math.min(...values);
+            if (kind === 'avg') return values.reduce((a,b)=>a+b,0) / values.length;
+            return null;
+        }
+
+        function parseThresholdSpec(question) {
+            const q = question.toLowerCase();
+            let comparator = null;
+            if (q.includes('more than') || q.includes('greater than') || q.includes('above') || q.includes('over')) comparator = '>';
+            if (q.includes('less than') || q.includes('below') || q.includes('under')) comparator = comparator || '<';
+            if (q.includes('at least')) comparator = comparator || '>=';
+            if (q.includes('at most')) comparator = comparator || '<=';
+            if (q.includes('>=')) comparator = '>=';
+            else if (q.includes('<=')) comparator = '<=';
+            else if (q.includes('>')) comparator = comparator || '>';
+            else if (q.includes('<')) comparator = comparator || '<';
+            const numMatch = q.match(/(-?\d+\.?\d*)/);
+            const value = numMatch ? parseFloat(numMatch[1]) : null;
+            const paramId = findParameterId(question);
+            if (!comparator || value === null || !paramId) return null;
+            return { paramId, comparator, value };
+        }
+
         function detectListIntent(question) {
             const q = question.toLowerCase();
             return q.includes('show') || q.includes('list') || q.includes('readings') || q.includes('events');
         }
+
+        // Advanced analytics helpers
+        function deviceColumnName(rows) {
+            if (!rows || rows.length === 0) return null;
+            const keys = Object.keys(rows[0]);
+            const candidates = ['device', 'site', 'location', 'station'];
+            return candidates.find(k => keys.includes(k)) || null;
+        }
+
+        function groupBy(rows, key) {
+            const map = new Map();
+            rows.forEach(r => {
+                const k = r[key] || 'Unknown';
+                if (!map.has(k)) map.set(k, []);
+                map.get(k).push(r);
+            });
+            return map;
+        }
+
+        function groupByDay(rows, paramId) {
+            const map = new Map();
+            rows.forEach(r => {
+                const d = r.timestamp; if (!d) return;
+                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                const v = parseFloat(r[paramId]); if (isNaN(v)) return;
+                if (!map.has(key)) map.set(key, []);
+                map.get(key).push(v);
+            });
+            const result = [];
+            for (const [day, vals] of map.entries()) {
+                const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+                result.push({ day, average: avg, count: vals.length });
+            }
+            result.sort((a,b)=> new Date(a.day) - new Date(b.day));
+            return result;
+        }
+
+        function corrCoefficient(xs, ys) {
+            const n = Math.min(xs.length, ys.length);
+            if (n === 0) return null;
+            const x = xs.slice(0, n); const y = ys.slice(0, n);
+            const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+            const mx = mean(x), my = mean(y);
+            let num = 0, dx=0, dy=0;
+            for (let i=0;i<n;i++){ const vx=x[i]-mx; const vy=y[i]-my; num+=vx*vy; dx+=vx*vx; dy+=vy*vy; }
+            const den = Math.sqrt(dx*dy);
+            if (den === 0) return 0;
+            return num/den;
+        }
+
+        function findRunsAbove(rows, paramId, threshold) {
+            const runs = [];
+            let current = [];
+            rows.forEach(r => {
+                const v = parseFloat(r[paramId]);
+                if (!isNaN(v) && v > threshold) {
+                    current.push(r);
+                } else if (current.length) {
+                    runs.push(current);
+                    current = [];
+                }
+            });
+            if (current.length) runs.push(current);
+            return runs;
+        }
+
+        function getAlertStatus(paramId, value) {
+            const limits = parameterInfo[paramId]?.limits;
+            if (!limits || isNaN(value)) return 'normal';
+            if (paramId === 'ph') {
+                if (value >= limits.danger || value <= (14 - limits.danger)) return 'danger';
+                if (value >= limits.warning || value <= (14 - limits.warning)) return 'warning';
+                return 'normal';
+            }
+            if (value >= limits.danger) return 'danger';
+            if (value >= limits.warning) return 'warning';
+            return 'normal';
+        }
+
+        function getLastAlertTimestamp(paramId, severity = 'danger') {
+            const rows = [...historicalData].filter(r => r[paramId] !== undefined && r[paramId] !== '');
+            for (let i = rows.length - 1; i >= 0; i--) {
+                const v = parseFloat(rows[i][paramId]);
+                const status = getAlertStatus(paramId, v);
+                if (status === severity || (severity === 'warning' && status !== 'normal')) {
+                    return rows[i].timestamp;
+                }
+            }
+            return null;
+        }
+
+        function answerQuestion(question) {
+            if (!historicalData || historicalData.length === 0) {
+                return 'No historical data loaded yet. Please wait a moment and try again.';
+            }
+            const q = question.toLowerCase();
+            const specificDate = parseSpecificDate(q);
+            const listIntent = detectListIntent(q) || q.includes('data');
+            const paramId = findParameterId(q);
+
+            // Date-only full listing: "show the data on YYYY/MM/DD" (no parameter)
+            if (specificDate && listIntent && !paramId) {
+                const dateRows = historicalData.filter(r => sameDay(r.timestamp, specificDate));
+                if (dateRows.length === 0) return `No data on ${specificDate.toLocaleDateString()}.`;
+                const lines = dateRows.map(r => {
+                    const t = r.timestamp.toLocaleString();
+                    const parts = Object.keys(r).filter(k => k !== 'timestamp').map(k => {
+                        const raw = r[k];
+                        if (raw === undefined || raw === '') return null;
+                        const num = parseFloat(raw);
+                        const val = !isNaN(num) ? num.toFixed(2) : String(raw);
+                        return `${k}: ${val}`;
+                    }).filter(Boolean);
+                    return `• ${t} — ${parts.join(', ')}`;
+                }).join('<br/>');
+                return `${dateRows.length} readings on ${specificDate.toLocaleDateString()}:<br/>${lines}`;
+            }
+            if (!paramId) return 'Please specify a parameter (e.g., COD, pH, temperature).';
+
+            // Current value / latest reading (optionally by device/location)
+            if (q.includes('current') || q.includes('latest') || q.includes('right now')) {
+                const dcol = deviceColumnName(historicalData);
+                const latest = historicalData[historicalData.length - 1];
+                const unit = parameterInfo[paramId].unit || '';
+                if (dcol && (q.includes('device') || q.includes('location') || q.includes('site') || q.includes('station'))) {
+                    const map = groupBy(historicalData, dcol);
+                    const lines = [];
+                    for (const [key, rows] of map.entries()) {
+                        const lr = rows[rows.length - 1];
+                        const v = parseFloat(lr[paramId]);
+                        if (!isNaN(v)) lines.push(`• ${key}: ${v.toFixed(2)} ${unit} @ ${lr.timestamp.toLocaleString()}`);
+                    }
+                    if (lines.length) return `Latest ${parameterInfo[paramId].label} by ${dcol}:<br/>${lines.join('<br/>')}`;
+                }
+                if (latest && latest[paramId] !== undefined) {
+                    const v = parseFloat(latest[paramId]);
+                    if (!isNaN(v)) return `Latest ${parameterInfo[paramId].label}: ${v.toFixed(2)} ${unit} @ ${latest.timestamp.toLocaleString()}`;
+                }
+                return 'No recent data available.';
+            }
+
+            // Last alarm queries (e.g., "when was the last pH alarm")
+            if (q.includes('last alarm') || q.includes('last alert')) {
+                const ts = getLastAlertTimestamp(paramId, 'danger');
+                if (!ts) return `No ${parameterInfo[paramId].label} danger alarms found.`;
+                return `Last ${parameterInfo[paramId].label} alarm: ${ts.toLocaleString()}`;
+            }
+
+            // Threshold queries (e.g., over/below X)
+            const thresholdSpec = parseThresholdSpec(q);
+            const windowSpec = specificDate ? { amount: 36500, unit: 'days' } : parseTimeWindow(q);
+            const inWindow = filterByTimeWindow(historicalData, windowSpec);
+            const dataRows = specificDate ? inWindow.filter(r => sameDay(r.timestamp, specificDate)) : inWindow;
+
+            if (thresholdSpec && thresholdSpec.paramId === paramId) {
+                const { comparator, value } = thresholdSpec;
+                const matches = dataRows.filter(r => {
+                    const v = parseFloat(r[paramId]);
+                    if (isNaN(v)) return false;
+                    if (comparator === '>') return v > value;
+                    if (comparator === '>=') return v >= value;
+                    if (comparator === '<') return v < value;
+                    if (comparator === '<=') return v <= value;
+                    if (comparator === '==') return v === value;
+                    return false;
+                });
+                const unit = parameterInfo[paramId].unit || '';
+                const whenText = formatWhenText(windowSpec, specificDate);
+                if (matches.length === 0) return `No ${parameterInfo[paramId].label} readings ${comparator} ${value} ${unit} in ${whenText}.`;
+                const lines = matches.map(r => `• ${r.timestamp.toLocaleString()} — ${parseFloat(r[paramId]).toFixed(2)} ${unit}`).join('<br/>');
+                return `${matches.length} ${parameterInfo[paramId].label} readings ${comparator} ${value} ${unit} in ${whenText}:<br/>${lines}`;
+            }
+
+            // Exceedance periods (e.g., turbidity exceeded safe limits)
+            if (q.includes('exceeded') || q.includes('exceed') || q.includes('safe limit')) {
+                const limit = parameterInfo[paramId]?.limits?.warning ?? null;
+                if (limit === null) return 'No threshold configured for this parameter.';
+                const runs = findRunsAbove(dataRows, paramId, limit);
+                if (runs.length === 0) return `No periods where ${parameterInfo[paramId].label} exceeded ${limit}.`;
+                const summaries = runs.map(run => `${run[0].timestamp.toLocaleString()} → ${run[run.length-1].timestamp.toLocaleString()} (${run.length} points)`);
+                return `Periods where ${parameterInfo[paramId].label} exceeded ${limit}:<br/>${summaries.map(s => '• ' + s).join('<br/>')}`;
+            }
+
+            // Correlation (e.g., compare ORP vs pH, temperature vs COD)
+            if (q.includes('correlation') || q.includes('compare')) {
+                const otherParamCandidates = ['ph','orp','cod','bod','tss','turbidity','temperature','conductivity'];
+                const other = otherParamCandidates.find(p => p !== paramId && q.includes(p));
+                const otherId = other || null;
+                if (!otherId || !parameterInfo[otherId]) return 'Second parameter not found for correlation.';
+                const xs = dataRows.map(r => parseFloat(r[paramId])).filter(v => !isNaN(v));
+                const ys = dataRows.map(r => parseFloat(r[otherId])).filter(v => !isNaN(v));
+                const rcoef = corrCoefficient(xs, ys);
+                if (rcoef === null) return 'Insufficient data for correlation.';
+                return `Correlation between ${parameterInfo[paramId].label} and ${parameterInfo[otherId].label} in last ${windowSpec.amount} ${windowSpec.unit}: r = ${rcoef.toFixed(3)}.`;
+            }
+
+            // Daily averages
+            if (q.includes('daily average') || (q.includes('calculate') && q.includes('daily'))) {
+                const grouped = groupByDay(dataRows, paramId);
+                if (grouped.length === 0) return 'No data available.';
+                const unit = parameterInfo[paramId].unit || '';
+                const lines = grouped.map(g => `• ${g.day} — ${g.average.toFixed(2)} ${unit} (${g.count} pts)`).join('<br/>' );
+                return `Daily averages for ${parameterInfo[paramId].label}:<br/>${lines}`;
+            }
+
+            // Rank by device/location (e.g., rank devices by average conductivity)
+            if (q.includes('rank') || q.includes('highest') || q.includes('by average')) {
+                const dcol = deviceColumnName(dataRows);
+                if (!dcol) return 'No device/location column found.';
+                const map = groupBy(dataRows, dcol);
+                const stats = [];
+                for (const [key, rows] of map.entries()) {
+                    const vals = rows.map(r => parseFloat(r[paramId])).filter(v => !isNaN(v));
+                    if (vals.length === 0) continue;
+                    const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+                    stats.push({ key, avg });
+                }
+                stats.sort((a,b)=> b.avg - a.avg);
+                if (stats.length === 0) return 'No data available.';
+                const unit = parameterInfo[paramId].unit || '';
+                const lines = stats.map(s => `• ${s.key}: ${s.avg.toFixed(2)} ${unit}`).join('<br/>' );
+                return `Average ${parameterInfo[paramId].label} by ${dcol} (desc):<br/>${lines}`;
+            }
+
+            // Count queries (e.g., how many cod points)
+            if (q.includes('how many')) {
+                const count = dataRows.filter(r => r[paramId] !== undefined && r[paramId] !== '' && !isNaN(parseFloat(r[paramId]))).length;
+                const whenText = formatWhenText(windowSpec, specificDate);
+                return `${count} ${parameterInfo[paramId].label} data points in ${whenText}.`;
+            }
+
+            // Stats queries (max/min/avg)
+            const kind = detectStatKind(q);
+            const values = dataRows.map(r => parseFloat(r[paramId])).filter(v => !isNaN(v));
+            const stat = computeStat(values, kind);
+            if (stat === null) return 'No data available for that query.';
+            const unit = parameterInfo[paramId].unit || '';
+            const whenText = formatWhenText(windowSpec, specificDate);
+            return `${kind.toUpperCase()} ${parameterInfo[paramId].label} in ${whenText}: <strong>${stat.toFixed(2)} ${unit}</strong> (from ${values.length} data points).`;
+        }
+
+        // Removed local Q&A parsing and statistics; delegating answers to Ask PrudeX backend
 
         function parseThresholdSpec(question) {
             const q = question.toLowerCase();
@@ -1271,8 +1614,10 @@
 
 
 
+        // Start at login
         showLoginPage();
 
     </script>
 </body>
+</html>
 </html>
