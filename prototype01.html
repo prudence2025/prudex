@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- ## MODIFICATION: Added libraries for advanced chart handling and CSV parsing ## -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
     <style>
@@ -20,7 +19,7 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            background-image: url("https://prudenceeng.lk/wp-content/uploads/2025/08/download.jpg"); 
+            background-image: url("https://prudenceeng.lk/wp-content/uploads/2025/08/download.jpg");
             background-size: cover; 
             background-position: center; 
             background-attachment: fixed;
@@ -67,12 +66,33 @@
             padding: 8px 15px;
             border-radius: 8px;
             font-weight: 600;
-            transition: background-color 0.2s ease-in-out;
+            transition: background-color 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
             cursor: pointer;
+            border: none;
         }
         .nav-button:hover {
             background-color: #0056b3;
         }
+
+        /* ## NEW: Glowing effect for the Ask PrudeX button ## */
+        .glowing-button {
+            animation: glowing 2.5s infinite ease-in-out;
+            box-shadow: 0 0 5px #007bff, 0 0 10px #00d4ff;
+        }
+
+        @keyframes glowing {
+            0% {
+                box-shadow: 0 0 5px #007bff, 0 0 10px #00d4ff;
+            }
+            50% {
+                box-shadow: 0 0 15px #007bff, 0 0 25px #00d4ff;
+            }
+            100% {
+                box-shadow: 0 0 5px #007bff, 0 0 10px #00d4ff;
+            }
+        }
+
+
         .dropdown {
             position: relative;
         }
@@ -117,7 +137,6 @@
             margin-bottom: 25px;
         }
 
-        /* ## MODIFICATION: Updated gauge styles for conic-gradient design ## */
         .gauge-card {
             display: flex;
             flex-direction: column;
@@ -186,7 +205,6 @@
             font-weight: normal;
         }
 
-        /* ## MODIFICATION: New gauge color classes ## */
         .gauge-green {
             --fill-color: #10b981 !important;
         }
@@ -194,7 +212,6 @@
             --fill-color: #f97316 !important;
         }
 
-        /* ## MODIFICATION: Updated gauges container for 5 per line layout ## */
         #gauges-container {
             display: flex;
             flex-wrap: wrap;
@@ -204,7 +221,6 @@
             width: 100%;
         }
 
-        /* ## MODIFICATION: Updated device status container for 5 per line layout ## */
         #device-status-container {
             display: flex;
             flex-wrap: wrap;
@@ -294,6 +310,7 @@
             font-size: 1.1em;
             transition: background-color 0.2s ease-in-out;
             cursor: pointer;
+            border: none;
         }
         .login-button:hover {
             background-color: #0056b3;
@@ -320,7 +337,6 @@
             display: none;
         }
 
-        /* ## MODIFICATION: New modal styles inspired by the provided file ## */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -463,7 +479,6 @@
             box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
         }
 
-        /* ## MODIFICATION: Responsive breakpoints for 5-per-line layout ## */
         @media (max-width: 1400px) {
             .gauge-card {
                 flex: 1 1 calc(25% - 22.5px);
@@ -512,9 +527,11 @@
 <body>
     <div id="login-page" class="login-container">
         <h2 class="login-title">PrudeX</h2>
-        <input type="text" id="username" placeholder="Username" class="login-input">
-        <input type="password" id="password" placeholder="Password" class="login-input">
-        <button id="login-button" class="login-button">Login</button>
+        <form id="login-form" style="width: 100%;">
+            <input type="text" id="username" placeholder="Username" class="login-input" required>
+            <input type="password" id="password" placeholder="Password" class="login-input" required>
+            <button type="submit" id="login-button" class="login-button">Login</button>
+        </form>
         <p id="login-error-message" class="login-error hidden"></p>
     </div>
 
@@ -538,7 +555,7 @@
                         <a href="https://api2.prudex.net/download" target="_blank" class="dropdown-item">Factory X Conductivity</a>
                     </div>
                 </div>
-                <button id="ask-prudex-button" class="nav-button">Ask PrudeX</button>
+                <button id="ask-prudex-button" class="nav-button glowing-button">Ask PrudeX</button>
                 <button id="logout-button" class="nav-button">Logout</button>
             </div>
 
@@ -546,7 +563,7 @@
 
         <div class="container mx-auto p-4 max-w-7xl mt-16">
             <h1 id="dashboard-main-title" class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 mb-16">
-                 Factory X Main Dashboard
+                Factory X Main Dashboard
             </h1>
 
             <div class="glass-panel">
@@ -561,7 +578,6 @@
         </div>
     </div>
 
-    <!-- ## MODIFICATION: Replaced old modal with new design ## -->
     <div id="history-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -576,7 +592,6 @@
                     <button data-days="30">30 Days</button>
                     <button id="alerts-button" class="alerts-button" title="Show only data points that are out of normal range (warnings and alerts)">Alerts</button>
                 </div>
-                <!-- Editable alert thresholds -->
                 <div id="alert-threshold-editor" style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:10px;">
                     <label for="alert-min" style="font-weight:600;">Min</label>
                     <input id="alert-min" type="number" step="0.01" placeholder="min (optional)" class="login-input" style="max-width:140px; margin:0;"/>
@@ -591,7 +606,6 @@
         </div>
     </div>
 
-    <!-- Ask PrudeX Modal -->
     <div id="ask-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -616,7 +630,7 @@
         // DOM element references
         const loginPage = document.getElementById("login-page");
         const dashboardContent = document.getElementById("dashboard-content");
-        const loginButton = document.getElementById("login-button");
+        const loginForm = document.getElementById("login-form"); 
         const logoutButton = document.getElementById("logout-button");
         const usernameInput = document.getElementById("username");
         const passwordInput = document.getElementById("password");
@@ -632,18 +646,16 @@
         const dashboardDropdownContent = document.getElementById("dashboard-dropdown-content");
         const dropdownItems = document.querySelectorAll(".dropdown-item");
         const askPrudexButton = document.getElementById("ask-prudex-button");
-        
-        // ## MODIFICATION: Updated modal and chart elements ##
         const historyModal = document.getElementById("history-modal");
         const modalCloseButton = document.getElementById('modal-close-button');
         const modalTitle = document.getElementById("modal-title");
         const filterButtons = document.querySelectorAll('.filter-buttons button');
         let historyChart = null;
         let historicalData = []; // To store parsed CSV data
-        let isAlertsMode = false; // Track if alerts mode is active
-        let customAlertMin = null; // Custom thresholds from editor (active)
+        let isAlertsMode = false;
+        let customAlertMin = null;
         let customAlertMax = null;
-        const customThresholds = {}; // per-parameter saved thresholds: { [paramId]: { min, max } }
+        const customThresholds = {};
 
         // Ask PrudeX elements
         const askModal = document.getElementById('ask-modal');
@@ -655,8 +667,6 @@
         let currentDashboardView = "main";
         let fetchDataInterval;
 
-
-
         const maxValues = {
             temperature: 50,
             cod: 500,
@@ -667,7 +677,6 @@
             conductivity: 50000
         };
 
-        // ## MODIFICATION: Added warning/danger limits for gauge colors ##
         const parameterInfo = {
             temperature: { id: "temperature", label: "Temperature", unit: "°C", limits: { warning: 30, danger: 35 } },
             cod: { id: "cod", label: "COD", unit: "mg/L", limits: { warning: 100, danger: 250 } },
@@ -677,26 +686,19 @@
             ph: { id: "ph", label: "pH", unit: "", limits: { warning: 8.5, danger: 9.5 } }, // Also checks for low pH
             conductivity: { id: "conductivity", label: "Conductivity", unit: "µS/cm", limits: { warning: 1500, danger: 5000 } }
         };
-        
         const statusColors = {
             normal: '#38b2ac',
             warning: '#f97316',
             danger: '#ef4444'
         };
-
         const dashboardParameters = {
             main: ['temperature', 'cod', 'bod', 'tss', 'turbidity', 'ph', 'conductivity'],
             kandy: ['temperature', 'cod', 'bod', 'tss', 'turbidity'],
             galle: ['ph', 'conductivity']
         };
-
-        /**
-         * ## MODIFICATION: New function to determine gauge color status ##
-         * Determines the status (normal, warning, danger) based on value and limits.
-         */
+        
         function getGaugeStatus(id, value, limits) {
             if (id === 'ph') {
-                // pH has both high and low danger/warning zones
                 if (value >= limits.danger || value <= (14 - limits.danger)) return 'danger';
                 if (value >= limits.warning || value <= (14 - limits.warning)) return 'warning';
                 return 'normal';
@@ -713,15 +715,10 @@
             return (percentage * 3.6);
         }
 
-        /**
-         * ## MODIFICATION: Updated gauge creation logic to use new design ##
-         */
         function updateOrCreateGaugeCard(id, label, unit, value, limits) {
             let cardElement = document.getElementById(`${id}-gauge-card`);
             const fillAngle = calculateGaugeFill(value, maxValues[id]);
             const displayValue = (typeof value === 'number') ? value.toFixed(2) : '0.00';
-            
-            // ## MODIFICATION: Apply new color scheme ##
             let gaugeColorClass = '';
             if (id === 'ph' || id === 'conductivity') {
                 gaugeColorClass = 'gauge-orange';
@@ -761,7 +758,6 @@
             let contentHtml = (isConnected && typeof value === 'number')
                 ? `<div class="value-display">${value.toFixed(2)} ${unit}</div>`
                 : `<div class="disconnected-text">Disconnected</div>`;
-
             if (!cardElement) {
                 const cardHtml = `
                     <div id="${id}-device-card" class="device-card" data-parameter="${id}">
@@ -787,25 +783,18 @@
             if (!timestamp) return false;
             const apiTime = new Date(timestamp);
             const currentTime = new Date();
-            return (currentTime - apiTime) / 1000 < 15;
+            return (currentTime - apiTime) / 1000 < 30;
         }
 
         async function fetchData() {
             let latestData = {};
             const dataSourcesStatus = { main: false, galle: false, conductivity: false };
-
             try {
-                const fetchPromises = [];
-                if (['main', 'kandy'].includes(currentDashboardView)) {
-                    fetchPromises.push(fetch(backendUrlMain).then(res => res.json()).then(data => ({ source: 'main', data })));
-                }
-                if (['main', 'galle'].includes(currentDashboardView)) {
-                    fetchPromises.push(fetch(backendUrlGalle).then(res => res.json()).then(data => ({ source: 'galle', data })));
-                }
-                if (['main', 'galle'].includes(currentDashboardView)) {
-                    fetchPromises.push(fetch(backendUrlConductivity).then(res => res.json()).then(data => ({ source: 'conductivity', data })));
-                }
-
+                const fetchPromises = [
+                    fetch(backendUrlMain).then(res => res.json()).then(data => ({ source: 'main', data })),
+                    fetch(backendUrlGalle).then(res => res.json()).then(data => ({ source: 'galle', data })),
+                    fetch(backendUrlConductivity).then(res => res.json()).then(data => ({ source: 'conductivity', data }))
+                ];
                 const results = await Promise.allSettled(fetchPromises);
                 results.forEach(result => {
                     if (result.status === 'fulfilled') {
@@ -825,10 +814,7 @@
 
             const paramsToDisplay = dashboardParameters[currentDashboardView] || [];
             const anyDataIsRecent = Object.values(dataSourcesStatus).some(status => status);
-
-            // ## MODIFICATION: Improved handling for disconnected state ##
             if (!anyDataIsRecent && paramsToDisplay.length > 0) {
-                // Show individual sensor status instead of general offline message
                 paramsToDisplay.forEach(paramId => {
                     const info = parameterInfo[paramId];
                     updateOrCreateDeviceStatusCard(info.id, info.label, 0, info.unit, false);
@@ -848,9 +834,6 @@
             });
         }
 
-        /**
-         * ## MODIFICATION: New function to fetch and parse all historical data at once ##
-         */
         async function fetchAllHistoricalData() {
             try {
                 const [kandyResponse, galleResponse, conductivityResponse] = await Promise.all([
@@ -861,12 +844,9 @@
                 const kandyText = await kandyResponse.text();
                 const galleText = await galleResponse.text();
                 const conductivityText = await conductivityResponse.text();
-
                 const kandyData = Papa.parse(kandyText, { header: true, skipEmptyLines: true }).data;
                 const galleData = Papa.parse(galleText, { header: true, skipEmptyLines: true }).data;
                 const conductivityData = Papa.parse(conductivityText, { header: true, skipEmptyLines: true }).data;
-
-                // Combine data, assuming timestamps are the key
                 const combinedData = {};
                 [...kandyData, ...galleData, ...conductivityData].forEach(row => {
                     if (row.timestamp) {
@@ -876,43 +856,33 @@
                         Object.assign(combinedData[row.timestamp], row);
                     }
                 });
-                
                 historicalData = Object.values(combinedData).map(row => ({
                     ...row,
                     timestamp: new Date(row.timestamp)
                 })).sort((a, b) => a.timestamp - b.timestamp);
-
             } catch (error) {
                 console.error("Error fetching historical data:", error);
                 historicalData = [];
             }
         }
 
-        /**
-         * ## MODIFICATION: New function to show the redesigned graph modal ##
-         */
         function showGraph(parameterId, parameterLabel) {
             modalTitle.textContent = `${parameterLabel} - Historical Data`;
             historyModal.dataset.parameter = parameterId;
             
-            // Reset alerts mode
             isAlertsMode = false;
             const alertsButton = document.getElementById('alerts-button');
             alertsButton.classList.remove('active');
             alertsButton.textContent = 'Alerts';
             
-            // Reset all buttons to inactive state first
             filterButtons.forEach(button => {
                 button.classList.remove('active');
             });
-            
-            // Set 1 Hour button as active by default
             const oneHourButton = document.querySelector('button[data-hours="1"]');
             if (oneHourButton) {
                 oneHourButton.classList.add('active');
             }
             
-            // Reset inputs to empty on open (fresh view)
             const alertMinInputEl = document.getElementById('alert-min');
             const alertMaxInputEl = document.getElementById('alert-max');
             customAlertMin = null;
@@ -920,20 +890,16 @@
             alertMinInputEl.value = '';
             alertMaxInputEl.value = '';
             
-            updateChart(1, 'hours'); // Default to 1 hour view
+            updateChart(1, 'hours'); 
             historyModal.classList.add('show');
         }
 
-        /**
-         * ## MODIFICATION: New function to update the chart with filtered data ##
-         */
         function updateChart(timeValue, timeUnit = 'days') {
             const parameterId = historyModal.dataset.parameter;
             if (!parameterId || historicalData.length === 0) return;
 
             const now = new Date();
             let cutoffDate;
-            
             if (timeUnit === 'hours') {
                 cutoffDate = new Date(now.getTime() - (timeValue * 60 * 60 * 1000));
             } else {
@@ -943,8 +909,7 @@
             let filteredData = historicalData.filter(row => 
                 row.timestamp >= cutoffDate && row[parameterId] !== undefined && row[parameterId] !== ''
             );
-
-            // If alerts mode is active, filter for out-of-range data only (supports custom thresholds)
+            
             if (isAlertsMode) {
                 filteredData = filteredData.filter(row => {
                     const value = parseFloat(row[parameterId]);
@@ -953,12 +918,10 @@
                     const maxThresh = (customAlertMax !== null) ? customAlertMax : limits.warning;
                     
                     if (parameterId === 'ph') {
-                        // pH has high and low zones
                         const high = (customAlertMax !== null ? value >= maxThresh : value >= limits.warning);
                         const low = (customAlertMin !== null ? value <= minThresh : value <= (14 - limits.warning));
                         return high || low;
                     } else {
-                        // Others: only high by default; include low if custom min provided
                         const high = (customAlertMax !== null ? value >= maxThresh : value >= limits.warning);
                         const low = (customAlertMin !== null ? value <= minThresh : false);
                         return high || low;
@@ -970,7 +933,6 @@
                 historyChart.destroy();
             }
 
-            // Choose x-axis unit dynamically so 7/30 day views show dates on X axis
             const xUnit = (timeUnit === 'days') ? (timeValue >= 7 ? 'day' : 'hour') : 'hour';
 
             const ctx = document.getElementById('history-chart').getContext('2d');
@@ -1008,12 +970,9 @@
                 }
             });
             
-            // First, remove 'active' class from all buttons
             filterButtons.forEach(button => {
                 button.classList.remove('active');
             });
-            
-            // Then, add 'active' class only to the selected button
             filterButtons.forEach(button => {
                 if (timeUnit === 'hours' && button.dataset.hours && parseInt(button.dataset.hours) === timeValue) {
                     button.classList.add('active');
@@ -1021,15 +980,8 @@
                     button.classList.add('active');
                 }
             });
-            
-            // Debug logging to help troubleshoot
-            console.log(`Chart updated: ${timeValue} ${timeUnit}`);
-            console.log(`Active button should be: ${timeValue} ${timeUnit}`);
         }
 
-        /**
-         * ## NEW: Function to toggle alerts mode ##
-         */
         function toggleAlertsMode() {
             isAlertsMode = !isAlertsMode;
             const alertsButton = document.getElementById('alerts-button');
@@ -1042,7 +994,6 @@
                 alertsButton.textContent = 'Alerts';
             }
             
-            // Get current active time filter and update chart
             const activeButton = document.querySelector('.filter-buttons button.active');
             if (activeButton) {
                 if (activeButton.dataset.hours) {
@@ -1056,44 +1007,34 @@
 
         // --- Login/Logout & Page Setup Logic ---
         function showLoginPage() {
-            loginPage.classList.remove("hidden");
-            dashboardContent.classList.add("hidden");
+            loginPage.style.display = 'flex';
+            dashboardContent.style.display = 'none';
             clearInterval(fetchDataInterval);
         }
         function showDashboardPage() {
-            dashboardContent.classList.remove("hidden");
+            loginPage.style.display = 'none';
+            dashboardContent.style.display = 'flex';
             
             fetchData();
             clearInterval(fetchDataInterval);
             fetchDataInterval = setInterval(fetchData, 5000);
-            fetchAllHistoricalData(); // Fetch historical data on login
+            fetchAllHistoricalData(); 
         }
 
-        // Login handler
-        loginButton.addEventListener("click", () => {
-            const username = (document.getElementById("username").value || '').trim().toLowerCase();
-            const password = (document.getElementById("password").value || '').trim();
+        loginForm.addEventListener("submit", (event) => {
+            event.preventDefault(); 
+            const username = (usernameInput.value || '').trim().toLowerCase();
+            const password = (passwordInput.value || '').trim();
+            
             if (username === "admin" && password === "2025") {
-                document.getElementById("login-error-message").classList.add("hidden");
+                loginErrorMessage.classList.add("hidden");
                 showDashboardPage();
-                loginPage.classList.add("hidden");
             } else {
-                const msg = document.getElementById("login-error-message");
-                msg.textContent = "Invalid username or password.";
-                msg.classList.remove("hidden");
+                loginErrorMessage.textContent = "Invalid username or password.";
+                loginErrorMessage.classList.remove("hidden");
             }
         });
 
-        // Allow pressing Enter to submit login
-        [document.getElementById("username"), document.getElementById("password")].forEach(el => {
-            el.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    loginButton.click();
-                }
-            });
-        });
-
-        // Logout reloads to show login again
         logoutButton.addEventListener("click", () => { window.location.reload(); });
 
         function setDashboardView(view) {
@@ -1108,24 +1049,19 @@
             e.stopPropagation();
             dashboardDropdownContent.classList.toggle('show');
         });
-
         downloadNavButton.addEventListener("click", (e) => {
             e.stopPropagation();
             downloadDropdownContent.classList.toggle('show');
         });
-
-        // Ask PrudeX open
         askPrudexButton.addEventListener('click', (e) => {
             e.stopPropagation();
             askInput.value = '';
             askModal.classList.add('show');
         });
-
         document.addEventListener('click', (e) => {
             if (!dashboardNavButton.contains(e.target)) dashboardDropdownContent.classList.remove('show');
             if (!downloadNavButton.contains(e.target)) downloadDropdownContent.classList.remove('show');
         });
-
         dropdownItems.forEach(item => {
             if (item.dataset.dashboard) {
                 item.addEventListener('click', (e) => {
@@ -1134,8 +1070,7 @@
                 });
             }
         });
-
-        // --- New Modal Event Listeners ---
+        
         modalCloseButton.addEventListener('click', () => historyModal.classList.remove('show'));
         historyModal.addEventListener('click', (e) => {
             if (e.target === historyModal) historyModal.classList.remove('show');
@@ -1149,20 +1084,17 @@
                 }
             });
         });
-
-        // Add event listener for alerts button
+        
         document.getElementById('alerts-button').addEventListener('click', () => {
             toggleAlertsMode();
         });
-
-        // Threshold editor handlers
+        
         const alertMinInput = document.getElementById('alert-min');
         const alertMaxInput = document.getElementById('alert-max');
         const applyAlertBtn = document.getElementById('apply-alert-thresholds');
         const clearAlertBtn = document.getElementById('clear-alert-thresholds');
 
         function refreshChartForThresholds() {
-            // keep current time filter
             const activeButton = document.querySelector('.filter-buttons button.active');
             if (activeButton) {
                 if (activeButton.dataset.hours) {
@@ -1181,13 +1113,11 @@
             customAlertMin = minVal === '' ? null : parseFloat(minVal);
             customAlertMax = maxVal === '' ? null : parseFloat(maxVal);
             const pid = historyModal.dataset.parameter;
-            isAlertsMode = true; // switch to alerts view when applying
+            isAlertsMode = true;
             document.getElementById('alerts-button').classList.add('active');
             document.getElementById('alerts-button').textContent = 'Show All';
             refreshChartForThresholds();
         });
-
-        // Removed 'Save Range' button; Safe Range is descriptive label only
 
         clearAlertBtn.addEventListener('click', () => {
             customAlertMin = null;
@@ -1198,20 +1128,18 @@
             customThresholds[pid] = { min: null, max: null };
             refreshChartForThresholds();
         });
-
-        // Ask PrudeX handlers
+        
         askCloseButton.addEventListener('click', () => askModal.classList.remove('show'));
         askModal.addEventListener('click', (e) => { if (e.target === askModal) askModal.classList.remove('show'); });
         askSubmit.addEventListener('click', () => handleAsk());
         askInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAsk(); });
-
+        
         async function handleAsk() {
             const question = (askInput.value || '').trim();
             if (!question) return;
             appendChat('user', question);
             askInput.value = '';
 
-            // Local analysis only
             const thinkingId = appendChat('assistant', '<span class="typing-dots"><span></span><span></span><span></span></span>');
             try {
                 const answerText = answerQuestion(question);
@@ -1251,17 +1179,89 @@
             if (bubble) bubble.innerHTML = newContent;
         }
 
-        // --- Local Q&A analytics ---
+        function answerQuestion(question) {
+            if (!historicalData || historicalData.length === 0) {
+                return "I don't have any historical data to analyze yet. Please wait for it to load.";
+            }
+
+            const q = question.toLowerCase();
+            const timeWindow = parseTimeWindow(q);
+            const specificDate = parseSpecificDate(q);
+
+            let data = historicalData;
+
+            if (specificDate) {
+                data = data.filter(row => sameDay(row.timestamp, specificDate));
+            } else {
+                data = filterByTimeWindow(data, timeWindow);
+            }
+
+            if (data.length === 0) {
+                return `I found no data for the specified time period (${formatWhenText(timeWindow, specificDate)}).`;
+            }
+
+            const paramId = findParameterId(q);
+            const thresholdSpec = parseThresholdSpec(q);
+
+            if (thresholdSpec) {
+                const { paramId: tParam, comparator, value } = thresholdSpec;
+                let count = 0;
+                data.forEach(row => {
+                    const rowVal = parseFloat(row[tParam]);
+                    if (isNaN(rowVal)) return;
+
+                    if (comparator === '>' && rowVal > value) count++;
+                    else if (comparator === '<' && rowVal < value) count++;
+                    else if (comparator === '>=' && rowVal >= value) count++;
+                    else if (comparator === '<=' && rowVal <= value) count++;
+                });
+                const paramLabel = parameterInfo[tParam] ? parameterInfo[tParam].label : tParam;
+                return `In the ${formatWhenText(timeWindow, specificDate)}, the ${paramLabel} was ${comparator} ${value} a total of ${count} times.`;
+
+            } else if (paramId) {
+                const statKind = detectStatKind(q);
+                const values = data.map(row => parseFloat(row[paramId])).filter(v => !isNaN(v));
+
+                if (values.length === 0) {
+                    return `I couldn't find any valid data for ${parameterInfo[paramId].label} in that time frame.`;
+                }
+
+                const result = computeStat(values, statKind);
+                if (result === null) {
+                    return "I couldn't compute the statistic.";
+                }
+
+                const unit = parameterInfo[paramId].unit || '';
+                return `The ${statKind} ${parameterInfo[paramId].label} for the ${formatWhenText(timeWindow, specificDate)} was ${result.toFixed(2)} ${unit}.`;
+
+            } else {
+                return "Sorry, I'm not sure how to answer that. Please ask about statistics (average, max, min) for a specific parameter (like temperature, pH) or ask about how many times a value was above or below a threshold.";
+            }
+        }
+        
+        // --- ## MODIFICATION: Upgraded Q&A helper functions for better parsing ---
         function parseTimeWindow(question) {
-            const hoursMatch = question.match(/last\s+(\d+)\s*hour/i);
-            const daysMatch = question.match(/last\s+(\d+)\s*day/i);
-            const weekMatch = question.match(/last\s+(\d+)\s*week/i);
-            const monthMatch = question.match(/last\s+(\d+)\s*month/i);
-            if (hoursMatch) return { amount: parseInt(hoursMatch[1]), unit: 'hours' };
-            if (daysMatch) return { amount: parseInt(daysMatch[1]), unit: 'days' };
-            if (weekMatch) return { amount: parseInt(weekMatch[1]) * 7, unit: 'days' };
-            if (monthMatch) return { amount: parseInt(monthMatch[1]) * 30, unit: 'days' };
-            // default: all time (no limit)
+            let match;
+            // Hours
+            match = question.match(/(?:in|over|for|last)\s+(?:the\s+)?(\d+)\s+hours?/i);
+            if (match) return { amount: parseInt(match[1]), unit: 'hours' };
+            if (/\s(an|one)\s+hour/i.test(question)) return { amount: 1, unit: 'hours' };
+
+            // Days
+            match = question.match(/(?:in|over|for|last)\s+(?:the\s+)?(\d+)\s+days?/i);
+            if (match) return { amount: parseInt(match[1]), unit: 'days' };
+            if (/\s(a|one)\s+day/i.test(question)) return { amount: 1, unit: 'days' };
+            
+            // Weeks
+            match = question.match(/(?:in|over|for|last)\s+(?:the\s+)?(\d+)\s+weeks?/i);
+            if (match) return { amount: parseInt(match[1]) * 7, unit: 'days' };
+            if (/\s(a|one)\s+week/i.test(question)) return { amount: 7, unit: 'days' };
+
+            // Months
+            match = question.match(/(?:in|over|for|last)\s+(?:the\s+)?(\d+)\s+months?/i);
+            if (match) return { amount: parseInt(match[1]) * 30, unit: 'days' };
+            if (/\s(a|one)\s+month/i.test(question)) return { amount: 30, unit: 'days' };
+
             return null;
         }
 
@@ -1275,7 +1275,7 @@
         function formatWhenText(windowSpec, specificDate) {
             if (specificDate) return specificDate.toLocaleDateString();
             if (!windowSpec) return 'all time';
-            return `last ${windowSpec.amount} ${windowSpec.unit}`;
+            return `the last ${windowSpec.amount} ${windowSpec.unit}`;
         }
 
         function parseSpecificDate(question) {
@@ -1328,283 +1328,15 @@
         function parseThresholdSpec(question) {
             const q = question.toLowerCase();
             let comparator = null;
-            if (q.includes('more than') || q.includes('greater than') || q.includes('above') || q.includes('over')) comparator = '>';
-            if (q.includes('less than') || q.includes('below') || q.includes('under')) comparator = comparator || '<';
-            if (q.includes('at least')) comparator = comparator || '>=';
-            if (q.includes('at most')) comparator = comparator || '<=';
-            if (q.includes('>=')) comparator = '>=';
-            else if (q.includes('<=')) comparator = '<=';
-            else if (q.includes('>')) comparator = comparator || '>';
-            else if (q.includes('<')) comparator = comparator || '<';
-            const numMatch = q.match(/(-?\d+\.?\d*)/);
-            const value = numMatch ? parseFloat(numMatch[1]) : null;
-            const paramId = findParameterId(question);
-            if (!comparator || value === null || !paramId) return null;
-            return { paramId, comparator, value };
-        }
-
-        function detectListIntent(question) {
-            const q = question.toLowerCase();
-            return q.includes('show') || q.includes('list') || q.includes('readings') || q.includes('events');
-        }
-
-        // Advanced analytics helpers
-        function deviceColumnName(rows) {
-            if (!rows || rows.length === 0) return null;
-            const keys = Object.keys(rows[0]);
-            const candidates = ['device', 'site', 'location', 'station'];
-            return candidates.find(k => keys.includes(k)) || null;
-        }
-
-        function groupBy(rows, key) {
-            const map = new Map();
-            rows.forEach(r => {
-                const k = r[key] || 'Unknown';
-                if (!map.has(k)) map.set(k, []);
-                map.get(k).push(r);
-            });
-            return map;
-        }
-
-        function groupByDay(rows, paramId) {
-            const map = new Map();
-            rows.forEach(r => {
-                const d = r.timestamp; if (!d) return;
-                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                const v = parseFloat(r[paramId]); if (isNaN(v)) return;
-                if (!map.has(key)) map.set(key, []);
-                map.get(key).push(v);
-            });
-            const result = [];
-            for (const [day, vals] of map.entries()) {
-                const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
-                result.push({ day, average: avg, count: vals.length });
-            }
-            result.sort((a,b)=> new Date(a.day) - new Date(b.day));
-            return result;
-        }
-
-        function corrCoefficient(xs, ys) {
-            const n = Math.min(xs.length, ys.length);
-            if (n === 0) return null;
-            const x = xs.slice(0, n); const y = ys.slice(0, n);
-            const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
-            const mx = mean(x), my = mean(y);
-            let num = 0, dx=0, dy=0;
-            for (let i=0;i<n;i++){ const vx=x[i]-mx; const vy=y[i]-my; num+=vx*vy; dx+=vx*vx; dy+=vy*vy; }
-            const den = Math.sqrt(dx*dy);
-            if (den === 0) return 0;
-            return num/den;
-        }
-
-        function findRunsAbove(rows, paramId, threshold) {
-            const runs = [];
-            let current = [];
-            rows.forEach(r => {
-                const v = parseFloat(r[paramId]);
-                if (!isNaN(v) && v > threshold) {
-                    current.push(r);
-                } else if (current.length) {
-                    runs.push(current);
-                    current = [];
-                }
-            });
-            if (current.length) runs.push(current);
-            return runs;
-        }
-
-        function getAlertStatus(paramId, value) {
-            const limits = parameterInfo[paramId]?.limits;
-            if (!limits || isNaN(value)) return 'normal';
-            if (paramId === 'ph') {
-                if (value >= limits.danger || value <= (14 - limits.danger)) return 'danger';
-                if (value >= limits.warning || value <= (14 - limits.warning)) return 'warning';
-                return 'normal';
-            }
-            if (value >= limits.danger) return 'danger';
-            if (value >= limits.warning) return 'warning';
-            return 'normal';
-        }
-
-        function getLastAlertTimestamp(paramId, severity = 'danger') {
-            const rows = [...historicalData].filter(r => r[paramId] !== undefined && r[paramId] !== '');
-            for (let i = rows.length - 1; i >= 0; i--) {
-                const v = parseFloat(rows[i][paramId]);
-                const status = getAlertStatus(paramId, v);
-                if (status === severity || (severity === 'warning' && status !== 'normal')) {
-                    return rows[i].timestamp;
-                }
-            }
-            return null;
-        }
-
-        function answerQuestion(question) {
-            if (!historicalData || historicalData.length === 0) {
-                return 'No historical data loaded yet. Please wait a moment and try again.';
-            }
-            const q = question.toLowerCase();
-            const specificDate = parseSpecificDate(q);
-            const listIntent = detectListIntent(q) || q.includes('data');
-            const paramId = findParameterId(q);
-
-            // Date-only full listing: "show the data on YYYY/MM/DD" (no parameter)
-            if (specificDate && listIntent && !paramId) {
-                const dateRows = historicalData.filter(r => sameDay(r.timestamp, specificDate));
-                if (dateRows.length === 0) return `No data on ${specificDate.toLocaleDateString()}.`;
-                const lines = dateRows.map(r => {
-                    const t = r.timestamp.toLocaleString();
-                    const parts = Object.keys(r).filter(k => k !== 'timestamp').map(k => {
-                        const raw = r[k];
-                        if (raw === undefined || raw === '') return null;
-                        const num = parseFloat(raw);
-                        const val = !isNaN(num) ? num.toFixed(2) : String(raw);
-                        return `${k}: ${val}`;
-                    }).filter(Boolean);
-                    return `• ${t} — ${parts.join(', ')}`;
-                }).join('<br/>');
-                return `${dateRows.length} readings on ${specificDate.toLocaleDateString()}:<br/>${lines}`;
-            }
-            if (!paramId) return 'Please specify a parameter (e.g., COD, pH, temperature).';
-
-            // Current value / latest reading (optionally by device/location)
-            if (q.includes('current') || q.includes('latest') || q.includes('right now')) {
-                const dcol = deviceColumnName(historicalData);
-                const latest = historicalData[historicalData.length - 1];
-                const unit = parameterInfo[paramId].unit || '';
-                if (dcol && (q.includes('device') || q.includes('location') || q.includes('site') || q.includes('station'))) {
-                    const map = groupBy(historicalData, dcol);
-                    const lines = [];
-                    for (const [key, rows] of map.entries()) {
-                        const lr = rows[rows.length - 1];
-                        const v = parseFloat(lr[paramId]);
-                        if (!isNaN(v)) lines.push(`• ${key}: ${v.toFixed(2)} ${unit} @ ${lr.timestamp.toLocaleString()}`);
-                    }
-                    if (lines.length) return `Latest ${parameterInfo[paramId].label} by ${dcol}:<br/>${lines.join('<br/>')}`;
-                }
-                if (latest && latest[paramId] !== undefined) {
-                    const v = parseFloat(latest[paramId]);
-                    if (!isNaN(v)) return `Latest ${parameterInfo[paramId].label}: ${v.toFixed(2)} ${unit} @ ${latest.timestamp.toLocaleString()}`;
-                }
-                return 'No recent data available.';
-            }
-
-            // Last alarm queries (e.g., "when was the last pH alarm")
-            if (q.includes('last alarm') || q.includes('last alert')) {
-                const ts = getLastAlertTimestamp(paramId, 'danger');
-                if (!ts) return `No ${parameterInfo[paramId].label} danger alarms found.`;
-                return `Last ${parameterInfo[paramId].label} alarm: ${ts.toLocaleString()}`;
-            }
-
-            // Threshold queries (e.g., over/below X)
-            const thresholdSpec = parseThresholdSpec(q);
-            const windowSpec = specificDate ? { amount: 36500, unit: 'days' } : parseTimeWindow(q);
-            const inWindow = filterByTimeWindow(historicalData, windowSpec);
-            const dataRows = specificDate ? inWindow.filter(r => sameDay(r.timestamp, specificDate)) : inWindow;
-
-            if (thresholdSpec && thresholdSpec.paramId === paramId) {
-                const { comparator, value } = thresholdSpec;
-                const matches = dataRows.filter(r => {
-                    const v = parseFloat(r[paramId]);
-                    if (isNaN(v)) return false;
-                    if (comparator === '>') return v > value;
-                    if (comparator === '>=') return v >= value;
-                    if (comparator === '<') return v < value;
-                    if (comparator === '<=') return v <= value;
-                    if (comparator === '==') return v === value;
-                    return false;
-                });
-                const unit = parameterInfo[paramId].unit || '';
-                const whenText = formatWhenText(windowSpec, specificDate);
-                if (matches.length === 0) return `No ${parameterInfo[paramId].label} readings ${comparator} ${value} ${unit} in ${whenText}.`;
-                const lines = matches.map(r => `• ${r.timestamp.toLocaleString()} — ${parseFloat(r[paramId]).toFixed(2)} ${unit}`).join('<br/>');
-                return `${matches.length} ${parameterInfo[paramId].label} readings ${comparator} ${value} ${unit} in ${whenText}:<br/>${lines}`;
-            }
-
-            // Exceedance periods (e.g., turbidity exceeded safe limits)
-            if (q.includes('exceeded') || q.includes('exceed') || q.includes('safe limit')) {
-                const limit = parameterInfo[paramId]?.limits?.warning ?? null;
-                if (limit === null) return 'No threshold configured for this parameter.';
-                const runs = findRunsAbove(dataRows, paramId, limit);
-                if (runs.length === 0) return `No periods where ${parameterInfo[paramId].label} exceeded ${limit}.`;
-                const summaries = runs.map(run => `${run[0].timestamp.toLocaleString()} → ${run[run.length-1].timestamp.toLocaleString()} (${run.length} points)`);
-                return `Periods where ${parameterInfo[paramId].label} exceeded ${limit}:<br/>${summaries.map(s => '• ' + s).join('<br/>')}`;
-            }
-
-            // Correlation (e.g., compare ORP vs pH, temperature vs COD)
-            if (q.includes('correlation') || q.includes('compare')) {
-                const otherParamCandidates = ['ph','orp','cod','bod','tss','turbidity','temperature','conductivity'];
-                const other = otherParamCandidates.find(p => p !== paramId && q.includes(p));
-                const otherId = other || null;
-                if (!otherId || !parameterInfo[otherId]) return 'Second parameter not found for correlation.';
-                const xs = dataRows.map(r => parseFloat(r[paramId])).filter(v => !isNaN(v));
-                const ys = dataRows.map(r => parseFloat(r[otherId])).filter(v => !isNaN(v));
-                const rcoef = corrCoefficient(xs, ys);
-                if (rcoef === null) return 'Insufficient data for correlation.';
-                return `Correlation between ${parameterInfo[paramId].label} and ${parameterInfo[otherId].label} in last ${windowSpec.amount} ${windowSpec.unit}: r = ${rcoef.toFixed(3)}.`;
-            }
-
-            // Daily averages
-            if (q.includes('daily average') || (q.includes('calculate') && q.includes('daily'))) {
-                const grouped = groupByDay(dataRows, paramId);
-                if (grouped.length === 0) return 'No data available.';
-                const unit = parameterInfo[paramId].unit || '';
-                const lines = grouped.map(g => `• ${g.day} — ${g.average.toFixed(2)} ${unit} (${g.count} pts)`).join('<br/>' );
-                return `Daily averages for ${parameterInfo[paramId].label}:<br/>${lines}`;
-            }
-
-            // Rank by device/location (e.g., rank devices by average conductivity)
-            if (q.includes('rank') || q.includes('highest') || q.includes('by average')) {
-                const dcol = deviceColumnName(dataRows);
-                if (!dcol) return 'No device/location column found.';
-                const map = groupBy(dataRows, dcol);
-                const stats = [];
-                for (const [key, rows] of map.entries()) {
-                    const vals = rows.map(r => parseFloat(r[paramId])).filter(v => !isNaN(v));
-                    if (vals.length === 0) continue;
-                    const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
-                    stats.push({ key, avg });
-                }
-                stats.sort((a,b)=> b.avg - a.avg);
-                if (stats.length === 0) return 'No data available.';
-                const unit = parameterInfo[paramId].unit || '';
-                const lines = stats.map(s => `• ${s.key}: ${s.avg.toFixed(2)} ${unit}`).join('<br/>' );
-                return `Average ${parameterInfo[paramId].label} by ${dcol} (desc):<br/>${lines}`;
-            }
-
-            // Count queries (e.g., how many cod points)
-            if (q.includes('how many')) {
-                const count = dataRows.filter(r => r[paramId] !== undefined && r[paramId] !== '' && !isNaN(parseFloat(r[paramId]))).length;
-                const whenText = formatWhenText(windowSpec, specificDate);
-                return `${count} ${parameterInfo[paramId].label} data points in ${whenText}.`;
-            }
-
-            // Stats queries (max/min/avg)
-            const kind = detectStatKind(q);
-            const values = dataRows.map(r => parseFloat(r[paramId])).filter(v => !isNaN(v));
-            const stat = computeStat(values, kind);
-            if (stat === null) return 'No data available for that query.';
-            const unit = parameterInfo[paramId].unit || '';
-            const whenText = formatWhenText(windowSpec, specificDate);
-            return `${kind.toUpperCase()} ${parameterInfo[paramId].label} in ${whenText}: <strong>${stat.toFixed(2)} ${unit}</strong> (from ${values.length} data points).`;
-        }
-
-        // Removed local Q&A parsing and statistics; delegating answers to Ask PrudeX backend
-
-        function parseThresholdSpec(question) {
-            const q = question.toLowerCase();
-            // detect comparator phrases
-            let comparator = null;
             if (q.includes('more than') || q.includes('greater than') || q.includes('above')) comparator = '>';
             if (q.includes('less than') || q.includes('below')) comparator = comparator || '<';
             if (q.includes('at least')) comparator = comparator || '>=';
             if (q.includes('at most')) comparator = comparator || '<=';
-            // symbolic comparators
             if (q.includes('>=')) comparator = '>=';
             else if (q.includes('<=')) comparator = '<=';
             else if (q.includes('>')) comparator = '>';
             else if (q.includes('<')) comparator = '<';
-
-            // extract number
+            
             const numMatch = q.match(/(-?\d+\.?\d*)/);
             const value = numMatch ? parseFloat(numMatch[1]) : null;
             const paramId = findParameterId(question);
@@ -1612,12 +1344,8 @@
             return { paramId, comparator, value };
         }
 
-
-
         // Start at login
         showLoginPage();
-
     </script>
 </body>
-</html>
 </html>
