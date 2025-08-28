@@ -1225,19 +1225,27 @@
         }
 
         function answerQuestion(question) {
+            const q = question.toLowerCase().trim();
+
+            if (q === 'hi' || q === 'hello') {
+                return "Hi! I am PrudeX, your data analysis assistant. You can ask me questions like:\n\n" +
+                       "- `What was the average COD for the last 24 hours?`\n" +
+                       "- `Show me the max pH yesterday.`\n" +
+                       "- `How many times was temperature above 35 in the last week?`\n" +
+                       "- `How many pH alarms were there on 2023-10-27?`";
+            }
+
             if (!historicalData || historicalData.length === 0) {
                 return "I don't have any historical data to analyze yet. Please wait for it to load.";
             }
 
-            const q = question.toLowerCase();
             const timeWindow = parseTimeWindow(q);
             const specificDate = parseSpecificDate(q);
-
             let data = historicalData;
 
             if (specificDate) {
                 data = data.filter(row => sameDay(row.timestamp, specificDate));
-            } else {
+            } else if (timeWindow) {
                 data = filterByTimeWindow(data, timeWindow);
             }
 
@@ -1245,41 +1253,78 @@
                 return `I found no data for the specified time period (${formatWhenText(timeWindow, specificDate)}).`;
             }
 
-            const paramId = findParameterId(q);
+            const alarmQuery = parseAlarmQuery(q);
+            if (alarmQuery) {
+                const { paramId, paramLabel } = alarmQuery;
+                const limits = parameterInfo[paramId].limits;
+                const alertPoints = data.filter(row => {
+                    const value = parseFloat(row[paramId]);
+                    if (isNaN(value)) return false;
+                    if (paramId === 'ph') {
+                        return value >= limits.warning || value <= (14 - limits.warning);
+                    }
+                    return value >= limits.warning;
+                });
+
+                if (alertPoints.length === 0) {
+                    return `There were no ${paramLabel} alarms in the ${formatWhenText(timeWindow, specificDate)}.`;
+                }
+
+                const pointsText = alertPoints.map(p => `  - ${parseFloat(p[paramId]).toFixed(2)} at ${p.timestamp.toLocaleString()}`).join('\n');
+                return `${alertPoints.length} ${paramLabel} alarm(s) triggered in the ${formatWhen2(timeWindow, specificDate)}.\nThese are the points:\n${pointsText}`;
+            }
+
             const thresholdSpec = parseThresholdSpec(q);
             if (thresholdSpec) {
-                const { paramId: tParam, comparator, value } = thresholdSpec;
-                let count = 0;
-                data.forEach(row => {
-                    const rowVal = parseFloat(row[tParam]);
-                    if (isNaN(rowVal)) return;
-
-                    if (comparator === '>' && rowVal > value) count++;
-                    else if (comparator === '<' && rowVal < value) count++;
-                    else if (comparator === '>=' && rowVal >= value) count++;
-                    else if (comparator === '<=' && rowVal <= value) count++;
+                const { paramId, comparator, value, paramLabel } = thresholdSpec;
+                const matchingPoints = data.filter(row => {
+                    const rowVal = parseFloat(row[paramId]);
+                    if (isNaN(rowVal)) return false;
+                    if (comparator === '>') return rowVal > value;
+                    if (comparator === '<') return rowVal < value;
+                    if (comparator === '>=') return rowVal >= value;
+                    if (comparator === '<=') return rowVal <= value;
+                    return false;
                 });
-                const paramLabel = parameterInfo[tParam] ? parameterInfo[tParam].label : tParam;
-                return `In the ${formatWhenText(timeWindow, specificDate)}, the ${paramLabel} was ${comparator} ${value} a total of ${count} times.`;
-            } else if (paramId) {
+
+                if (matchingPoints.length === 0) {
+                    return `The ${paramLabel} was never ${comparator} ${value} in the ${formatWhenText(timeWindow, specificDate)}.`;
+                }
+
+                const pointsText = matchingPoints.map(p => `  - ${parseFloat(p[paramId]).toFixed(2)} at ${p.timestamp.toLocaleString()}`).join('\n');
+                return `The ${paramLabel} was ${comparator} ${value} ${matchingPoints.length} times in the ${formatWhen2(timeWindow, specificDate)}.\nThese are the points:\n${pointsText}`;
+            }
+
+            const paramId = findParameterId(q);
+            if (paramId) {
                 const statKind = detectStatKind(q);
-                const values = data.map(row => parseFloat(row[paramId])).filter(v => !isNaN(v));
+                const paramLabel = parameterInfo[paramId].label;
+                const unit = parameterInfo[paramId].unit || '';
+                const values = data.map(row => ({...row, value: parseFloat(row[paramId])})).filter(item => !isNaN(item.value));
 
                 if (values.length === 0) {
-                    return `I couldn't find any valid data for ${parameterInfo[paramId].label} in that time frame.`;
+                    return `I couldn't find any valid data for ${paramLabel} in that time frame.`;
                 }
 
-                const result = computeStat(values, statKind);
-                if (result === null) {
-                    return "I couldn't compute the statistic.";
+                if (statKind === 'avg') {
+                    const avg = values.reduce((a, b) => a + b.value, 0) / values.length;
+                    return `${avg.toFixed(2)} ${unit}`;
                 }
 
-                const unit = parameterInfo[paramId].unit ||
-                '';
-                return `The ${statKind} ${parameterInfo[paramId].label} for the ${formatWhenText(timeWindow, specificDate)} was ${result.toFixed(2)} ${unit}.`;
-            } else {
-                return "Sorry, I'm not sure how to answer that. Please ask about statistics (average, max, min) for a specific parameter (like temperature, pH) or ask about how many times a value was above or below a threshold.";
+                if (statKind === 'max' || statKind === 'min') {
+                    let resultPoint = values[0];
+                    for (let i = 1; i < values.length; i++) {
+                        if (statKind === 'max' && values[i].value > resultPoint.value) {
+                            resultPoint = values[i];
+                        } else if (statKind === 'min' && values[i].value < resultPoint.value) {
+                            resultPoint = values[i];
+                        }
+                    }
+                    return `${resultPoint.value.toFixed(2)} ${unit} (at ${resultPoint.timestamp.toLocaleString()})`;
+                }
             }
+
+            return "Sorry, I'm not sure how to answer that. Please ask about statistics (average, max, min) for a specific parameter (like temperature, pH) or ask about how many times a value was above or below a threshold.";
         }
         
         // --- ## MODIFICATION: Upgraded Q&A helper functions for better parsing ---
@@ -1315,6 +1360,12 @@
             if (specificDate) return specificDate.toLocaleDateString();
             if (!windowSpec) return 'all time';
             return `the last ${windowSpec.amount} ${windowSpec.unit}`;
+        }
+
+        function formatWhen2(windowSpec, specificDate) {
+            if (specificDate) return `on ${specificDate.toLocaleDateString()}`;
+            if (!windowSpec) return 'overall';
+            return `last ${windowSpec.amount} ${windowSpec.unit}`;
         }
 
         function parseSpecificDate(question) {
@@ -1353,7 +1404,7 @@
             if (q.includes('highest') || q.includes('max')) return 'max';
             if (q.includes('lowest') || q.includes('min')) return 'min';
             if (q.includes('average') || q.includes('avg') || q.includes('mean')) return 'avg';
-            return 'avg';
+            return 'avg'; // Default to average if no other stat is found
         }
 
         function computeStat(values, kind) {
@@ -1380,11 +1431,24 @@
             const value = numMatch ? parseFloat(numMatch[1]) : null;
             const paramId = findParameterId(question);
             if (!comparator || value === null || !paramId) return null;
-            return { paramId, comparator, value };
+            const paramLabel = parameterInfo[paramId] ? parameterInfo[paramId].label : paramId;
+            return { paramId, comparator, value, paramLabel };
+        }
+
+        function parseAlarmQuery(question) {
+            const q = question.toLowerCase();
+            if (q.includes('alarm') || q.includes('alert')) {
+                const paramId = findParameterId(q);
+                if (paramId) {
+                    const paramLabel = parameterInfo[paramId] ? parameterInfo[paramId].label : paramId;
+                    return { paramId, paramLabel };
+                }
+            }
+            return null;
         }
 
         // Start at login
         showLoginPage();
     </script>
 </body>
-</html>
+</html></html>
