@@ -211,6 +211,9 @@
         .gauge-orange {
             --fill-color: #f97316 !important;
         }
+        .gauge-yellow {
+            --fill-color: #facc15 !important;
+        }
 
         #gauges-container {
             display: flex;
@@ -532,7 +535,7 @@
             <input type="password" id="password" placeholder="Password" class="login-input" required>
             <button type="submit" id="login-button" class="login-button">Login</button>
         </form>
-        <p id="login-error-message" class="login-error hidden"></p>
+         <p id="login-error-message" class="login-error hidden"></p>
     </div>
 
     <div id="dashboard-content" class="hidden flex-grow flex flex-col items-center">
@@ -541,19 +544,20 @@
             <div class="flex space-x-10 items-center">
                 <div class="relative dropdown">
                     <button id="dashboard-nav-button" class="nav-button">Dashboard</button>
-                    <div id="dashboard-dropdown-content" class="dropdown-content">
+                     <div id="dashboard-dropdown-content" class="dropdown-content">
                         <a href="#" class="dropdown-item" data-dashboard="main">Factory X Main Dashboard</a>
                         <a href="#" class="dropdown-item" data-dashboard="kandy">Factory X Kandy</a>
-                        <a href="#" class="dropdown-item" data-dashboard="galle">Factory X Galle</a>
+                         <a href="#" class="dropdown-item" data-dashboard="galle">Factory X Galle</a>
                     </div>
                 </div>
                 <div class="relative dropdown">
                     <button id="download-nav-button" class="nav-button">Download</button>
-                    <div id="download-dropdown-content" class="dropdown-content">
+                     <div id="download-dropdown-content" class="dropdown-content">
                         <a href="https://api.prudex.net/download" target="_blank" class="dropdown-item">Factory X Kandy</a>
-                        <a href="https://api1.prudex.net/download" target="_blank" class="dropdown-item">Factory X Galle</a>
-                        <a href="https://api2.prudex.net/download" target="_blank" class="dropdown-item">Factory X Conductivity</a>
-                    </div>
+                        <a href="https://api1.prudex.net/download" target="_blank" class="dropdown-item">Factory X Galle pH</a>
+                        <a href="https://api2.prudex.net/download" target="_blank" class="dropdown-item">Factory Galle Conductivity</a>
+                        <a href="https://api3.prudex.net/download" target="_blank" class="dropdown-item">Factory X Galle ORP</a>
+                   </div>
                 </div>
                 <button id="ask-prudex-button" class="nav-button glowing-button">Ask PrudeX</button>
                 <button id="logout-button" class="nav-button">Logout</button>
@@ -569,7 +573,7 @@
             <div class="glass-panel">
                 <div id="device-status-container">
                 </div>
-            </div>
+             </div>
 
             <div class="glass-panel">
                 <div id="gauges-container">
@@ -580,13 +584,13 @@
 
     <div id="history-modal" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-header">
+             <div class="modal-header">
                 <h2 id="modal-title" class="modal-title">Historical Data</h2>
                 <button id="modal-close-button" class="modal-close-button">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="filter-buttons">
-                    <button data-hours="1" class="active">1 Hour</button>
+                     <button data-hours="1" class="active">1 Hour</button>
                     <button data-days="1">1 Day</button>
                     <button data-days="7">7 Days</button>
                     <button data-days="30">30 Days</button>
@@ -609,7 +613,7 @@
     <div id="ask-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Ask PrudeX</h2>
+                  <h2 class="modal-title">Ask PrudeX</h2>
                 <button id="ask-close-button" class="modal-close-button">&times;</button>
             </div>
             <div class="modal-body">
@@ -626,8 +630,10 @@
         const backendUrlMain = "https://api.prudex.net/latest";
         const backendUrlGalle = "https://api1.prudex.net/latest";
         const backendUrlConductivity = "https://api2.prudex.net/latest";
+        const backendUrlOrp = "https://api3.prudex.net/latest";
 
-        // DOM element references
+
+         // DOM element references
         const loginPage = document.getElementById("login-page");
         const dashboardContent = document.getElementById("dashboard-content");
         const loginForm = document.getElementById("login-form"); 
@@ -637,7 +643,7 @@
         const loginErrorMessage = document.getElementById("login-error-message");
 
         const dashboardMainTitle = document.getElementById("dashboard-main-title");
-        const deviceStatusContainer = document.getElementById("device-status-container");
+         const deviceStatusContainer = document.getElementById("device-status-container");
         const gaugesContainer = document.getElementById("gauges-container");
 
         const downloadNavButton = document.getElementById("download-nav-button");
@@ -656,7 +662,6 @@
         let customAlertMin = null;
         let customAlertMax = null;
         const customThresholds = {};
-
         // Ask PrudeX elements
         const askModal = document.getElementById('ask-modal');
         const askCloseButton = document.getElementById('ask-close-button');
@@ -666,7 +671,6 @@
 
         let currentDashboardView = "main";
         let fetchDataInterval;
-
         const maxValues = {
             temperature: 50,
             cod: 500,
@@ -674,8 +678,9 @@
             tss: 300,
             turbidity: 1000,
             ph: 14,
-            conductivity: 50000
-        };
+            conductivity: 50000,
+            orp: 1000
+         };
 
         const parameterInfo = {
             temperature: { id: "temperature", label: "Temperature", unit: "°C", limits: { warning: 30, danger: 35 } },
@@ -684,7 +689,8 @@
             tss: { id: "tss", label: "TSS", unit: "mg/L", limits: { warning: 50, danger: 150 } },
             turbidity: { id: "turbidity", label: "Turbidity", unit: "NTU", limits: { warning: 5, danger: 50 } },
             ph: { id: "ph", label: "pH", unit: "", limits: { warning: 8.5, danger: 9.5 } }, // Also checks for low pH
-            conductivity: { id: "conductivity", label: "Conductivity", unit: "µS/cm", limits: { warning: 1500, danger: 5000 } }
+            conductivity: { id: "conductivity", label: "Conductivity", unit: "µS/cm", limits: { warning: 1500, danger: 5000 } },
+            orp: { id: "orp", label: "ORP", unit: "mV", limits: { warning: 350, danger: 450 } }
         };
         const statusColors = {
             normal: '#38b2ac',
@@ -692,11 +698,10 @@
             danger: '#ef4444'
         };
         const dashboardParameters = {
-            main: ['temperature', 'cod', 'bod', 'tss', 'turbidity', 'ph', 'conductivity'],
+            main: ['temperature', 'cod', 'bod', 'tss', 'turbidity', 'ph', 'conductivity', 'orp'],
             kandy: ['temperature', 'cod', 'bod', 'tss', 'turbidity'],
-            galle: ['ph', 'conductivity']
+            galle: ['ph', 'conductivity', 'orp']
         };
-        
         function getGaugeStatus(id, value, limits) {
             if (id === 'ph') {
                 if (value >= limits.danger || value <= (14 - limits.danger)) return 'danger';
@@ -722,6 +727,8 @@
             let gaugeColorClass = '';
             if (id === 'ph' || id === 'conductivity') {
                 gaugeColorClass = 'gauge-orange';
+            } else if (id === 'orp') {
+                gaugeColorClass = 'gauge-yellow';
             } else {
                 gaugeColorClass = 'gauge-green';
             }
@@ -730,14 +737,14 @@
                 const cardHtml = `
                     <div id="${id}-gauge-card" class="gauge-card shadow-lg ${gaugeColorClass}">
                         <div class="gauge-container">
-                            <div class="gauge-fill" style="background: conic-gradient(var(--fill-color) ${fillAngle}deg, #e2e8f0 ${fillAngle}deg);"></div>
+                             <div class="gauge-fill" style="background: conic-gradient(var(--fill-color) ${fillAngle}deg, #e2e8f0 ${fillAngle}deg);"></div>
                             <div class="gauge-inner-circle">
                                 <span class="gauge-value">${displayValue}</span>
-                                <span class="gauge-unit">${unit}</span>
+                                 <span class="gauge-unit">${unit}</span>
                             </div>
                         </div>
                         <div class="gauge-label text-gray-700">${label}</div>
-                    </div>
+                     </div>
                 `;
                 gaugesContainer.insertAdjacentHTML('beforeend', cardHtml);
             } else {
@@ -756,14 +763,15 @@
         function updateOrCreateDeviceStatusCard(id, label, value, unit, isConnected) {
             let cardElement = document.getElementById(`${id}-device-card`);
             let contentHtml = (isConnected && typeof value === 'number')
-                ? `<div class="value-display">${value.toFixed(2)} ${unit}</div>`
+                ?
+                `<div class="value-display">${value.toFixed(2)} ${unit}</div>`
                 : `<div class="disconnected-text">Disconnected</div>`;
             if (!cardElement) {
                 const cardHtml = `
                     <div id="${id}-device-card" class="device-card" data-parameter="${id}">
                         <div class="device-name">${label} Sensor</div>
                         ${contentHtml}
-                    </div>
+                     </div>
                 `;
                 deviceStatusContainer.insertAdjacentHTML('beforeend', cardHtml);
                 
@@ -788,23 +796,24 @@
 
         async function fetchData() {
             let latestData = {};
-            const dataSourcesStatus = { main: false, galle: false, conductivity: false };
+            const dataSourcesStatus = { main: false, galle: false, conductivity: false, orp: false };
             try {
                 const fetchPromises = [
                     fetch(backendUrlMain).then(res => res.json()).then(data => ({ source: 'main', data })),
                     fetch(backendUrlGalle).then(res => res.json()).then(data => ({ source: 'galle', data })),
-                    fetch(backendUrlConductivity).then(res => res.json()).then(data => ({ source: 'conductivity', data }))
+                    fetch(backendUrlConductivity).then(res => res.json()).then(data => ({ source: 'conductivity', data })),
+                    fetch(backendUrlOrp).then(res => res.json()).then(data => ({ source: 'orp', data }))
                 ];
                 const results = await Promise.allSettled(fetchPromises);
                 results.forEach(result => {
                     if (result.status === 'fulfilled') {
                         const { source, data } = result.value;
                         if (isDataRecent(data.timestamp)) {
-                            dataSourcesStatus[source] = true;
+                             dataSourcesStatus[source] = true;
                             latestData = { ...latestData, ...data };
                         }
                     }
-                });
+                 });
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -819,13 +828,22 @@
                     const info = parameterInfo[paramId];
                     updateOrCreateDeviceStatusCard(info.id, info.label, 0, info.unit, false);
                     updateOrCreateGaugeCard(info.id, info.label, info.unit, 0, info.limits);
-                });
+                 });
                 return;
             }
 
             paramsToDisplay.forEach(paramId => {
                 const info = parameterInfo[paramId];
-                const source = (paramId === 'ph') ? 'galle' : (paramId === 'conductivity' ? 'conductivity' : 'main');
+                let source;
+                if (paramId === 'ph') {
+                    source = 'galle';
+                } else if (paramId === 'conductivity') {
+                    source = 'conductivity';
+                } else if (paramId === 'orp') {
+                    source = 'orp';
+                } else {
+                    source = 'main';
+                }
                 const isRecent = dataSourcesStatus[source];
                 const value = (isRecent && latestData[info.id] !== undefined) ? parseFloat(latestData[info.id]) : 0;
 
@@ -836,23 +854,26 @@
 
         async function fetchAllHistoricalData() {
             try {
-                const [kandyResponse, galleResponse, conductivityResponse] = await Promise.all([
+                const [kandyResponse, galleResponse, conductivityResponse, orpResponse] = await Promise.all([
                     fetch("https://api.prudex.net/download"),
                     fetch("https://api1.prudex.net/download"),
-                    fetch("https://api2.prudex.net/download")
+                    fetch("https://api2.prudex.net/download"),
+                    fetch("https://api3.prudex.net/download")
                 ]);
                 const kandyText = await kandyResponse.text();
                 const galleText = await galleResponse.text();
                 const conductivityText = await conductivityResponse.text();
+                const orpText = await orpResponse.text();
                 const kandyData = Papa.parse(kandyText, { header: true, skipEmptyLines: true }).data;
                 const galleData = Papa.parse(galleText, { header: true, skipEmptyLines: true }).data;
                 const conductivityData = Papa.parse(conductivityText, { header: true, skipEmptyLines: true }).data;
+                const orpData = Papa.parse(orpText, { header: true, skipEmptyLines: true }).data;
                 const combinedData = {};
-                [...kandyData, ...galleData, ...conductivityData].forEach(row => {
+                [...kandyData, ...galleData, ...conductivityData, ...orpData].forEach(row => {
                     if (row.timestamp) {
                         if (!combinedData[row.timestamp]) {
                             combinedData[row.timestamp] = {};
-                        }
+                         }
                         Object.assign(combinedData[row.timestamp], row);
                     }
                 });
@@ -874,7 +895,6 @@
             const alertsButton = document.getElementById('alerts-button');
             alertsButton.classList.remove('active');
             alertsButton.textContent = 'Alerts';
-            
             filterButtons.forEach(button => {
                 button.classList.remove('active');
             });
@@ -909,7 +929,6 @@
             let filteredData = historicalData.filter(row => 
                 row.timestamp >= cutoffDate && row[parameterId] !== undefined && row[parameterId] !== ''
             );
-            
             if (isAlertsMode) {
                 filteredData = filteredData.filter(row => {
                     const value = parseFloat(row[parameterId]);
@@ -918,12 +937,13 @@
                     const maxThresh = (customAlertMax !== null) ? customAlertMax : limits.warning;
                     
                     if (parameterId === 'ph') {
-                        const high = (customAlertMax !== null ? value >= maxThresh : value >= limits.warning);
+                         const high = (customAlertMax !== null ? value >= maxThresh : value >= limits.warning);
                         const low = (customAlertMin !== null ? value <= minThresh : value <= (14 - limits.warning));
                         return high || low;
-                    } else {
+                     } else {
                         const high = (customAlertMax !== null ? value >= maxThresh : value >= limits.warning);
-                        const low = (customAlertMin !== null ? value <= minThresh : false);
+                        const low = (customAlertMin !== null ?
+                        value <= minThresh : false);
                         return high || low;
                     }
                 });
@@ -933,7 +953,8 @@
                 historyChart.destroy();
             }
 
-            const xUnit = (timeUnit === 'days') ? (timeValue >= 7 ? 'day' : 'hour') : 'hour';
+            const xUnit = (timeUnit === 'days') ?
+            (timeValue >= 7 ? 'day' : 'hour') : 'hour';
 
             const ctx = document.getElementById('history-chart').getContext('2d');
             historyChart = new Chart(ctx, {
@@ -941,35 +962,34 @@
                 data: {
                     labels: filteredData.map(row => row.timestamp),
                     datasets: [{
-                        label: isAlertsMode ? `${parameterInfo[parameterId].label} - Alerts` : parameterInfo[parameterId].label,
+                         label: isAlertsMode ? `${parameterInfo[parameterId].label} - Alerts` : parameterInfo[parameterId].label,
                         data: filteredData.map(row => parseFloat(row[parameterId])),
                         borderColor: isAlertsMode ? '#dc2626' : '#007bff',
                         backgroundColor: isAlertsMode ? 'rgba(220, 38, 38, 0.1)' : 'rgba(0, 123, 255, 0.1)',
                         borderWidth: 2,
                         pointRadius: isAlertsMode ? 4 : 2,
                         tension: 0.1,
-                        fill: true
+                         fill: true
                     }]
                 },
                 options: {
                     responsive: true,
-                    scales: {
+                     scales: {
                         x: {
                             type: 'time',
                             time: {
-                                unit: xUnit,
+                                 unit: xUnit,
                                 tooltipFormat: 'MMM d, yyyy, h:mm a',
                                 displayFormats: { day: 'MMM d', hour: 'MMM d, h a' }
-                            },
+                             },
                             title: { display: true, text: 'Time' }
                         },
-                        y: {
+                         y: {
                             title: { display: true, text: `Value (${parameterInfo[parameterId].unit})` }
                         }
                     }
-                }
+                 }
             });
-            
             filterButtons.forEach(button => {
                 button.classList.remove('active');
             });
@@ -978,7 +998,7 @@
                     button.classList.add('active');
                 } else if (timeUnit === 'days' && button.dataset.days && parseInt(button.dataset.days) === timeValue) {
                     button.classList.add('active');
-                }
+                 }
             });
         }
 
@@ -1018,7 +1038,7 @@
             fetchData();
             clearInterval(fetchDataInterval);
             fetchDataInterval = setInterval(fetchData, 5000);
-            fetchAllHistoricalData(); 
+            fetchAllHistoricalData();
         }
 
         loginForm.addEventListener("submit", (event) => {
@@ -1027,14 +1047,13 @@
             const password = (passwordInput.value || '').trim();
             
             if (username === "admin" && password === "2025") {
-                loginErrorMessage.classList.add("hidden");
+                 loginErrorMessage.classList.add("hidden");
                 showDashboardPage();
             } else {
                 loginErrorMessage.textContent = "Invalid username or password.";
                 loginErrorMessage.classList.remove("hidden");
             }
         });
-
         logoutButton.addEventListener("click", () => { window.location.reload(); });
 
         function setDashboardView(view) {
@@ -1068,7 +1087,7 @@
                     e.preventDefault();
                     setDashboardView(e.target.dataset.dashboard);
                 });
-            }
+             }
         });
         
         modalCloseButton.addEventListener('click', () => historyModal.classList.remove('show'));
@@ -1081,19 +1100,16 @@
                     updateChart(parseInt(button.dataset.hours), 'hours');
                 } else if (button.dataset.days) {
                     updateChart(parseInt(button.dataset.days), 'days');
-                }
+                 }
             });
         });
-        
         document.getElementById('alerts-button').addEventListener('click', () => {
             toggleAlertsMode();
         });
-        
         const alertMinInput = document.getElementById('alert-min');
         const alertMaxInput = document.getElementById('alert-max');
         const applyAlertBtn = document.getElementById('apply-alert-thresholds');
         const clearAlertBtn = document.getElementById('clear-alert-thresholds');
-
         function refreshChartForThresholds() {
             const activeButton = document.querySelector('.filter-buttons button.active');
             if (activeButton) {
@@ -1112,13 +1128,12 @@
             const maxVal = alertMaxInput.value.trim();
             customAlertMin = minVal === '' ? null : parseFloat(minVal);
             customAlertMax = maxVal === '' ? null : parseFloat(maxVal);
-            const pid = historyModal.dataset.parameter;
+             const pid = historyModal.dataset.parameter;
             isAlertsMode = true;
             document.getElementById('alerts-button').classList.add('active');
             document.getElementById('alerts-button').textContent = 'Show All';
             refreshChartForThresholds();
         });
-
         clearAlertBtn.addEventListener('click', () => {
             customAlertMin = null;
             customAlertMax = null;
@@ -1126,14 +1141,13 @@
             alertMaxInput.value = '';
             const pid = historyModal.dataset.parameter;
             customThresholds[pid] = { min: null, max: null };
-            refreshChartForThresholds();
+             refreshChartForThresholds();
         });
         
         askCloseButton.addEventListener('click', () => askModal.classList.remove('show'));
         askModal.addEventListener('click', (e) => { if (e.target === askModal) askModal.classList.remove('show'); });
         askSubmit.addEventListener('click', () => handleAsk());
         askInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAsk(); });
-        
         async function handleAsk() {
             const question = (askInput.value || '').trim();
             if (!question) return;
@@ -1145,7 +1159,8 @@
                 const answerText = answerQuestion(question);
                 replaceChat(thinkingId, answerText);
             } catch (err) {
-                const message = (err && err.message) ? err.message : 'Unknown error';
+                const message = (err && err.message) ?
+                err.message : 'Unknown error';
                 replaceChat(thinkingId, `Sorry, I could not process that. (${message})`);
             }
         }
@@ -1202,7 +1217,6 @@
 
             const paramId = findParameterId(q);
             const thresholdSpec = parseThresholdSpec(q);
-
             if (thresholdSpec) {
                 const { paramId: tParam, comparator, value } = thresholdSpec;
                 let count = 0;
@@ -1217,7 +1231,6 @@
                 });
                 const paramLabel = parameterInfo[tParam] ? parameterInfo[tParam].label : tParam;
                 return `In the ${formatWhenText(timeWindow, specificDate)}, the ${paramLabel} was ${comparator} ${value} a total of ${count} times.`;
-
             } else if (paramId) {
                 const statKind = detectStatKind(q);
                 const values = data.map(row => parseFloat(row[paramId])).filter(v => !isNaN(v));
@@ -1231,9 +1244,9 @@
                     return "I couldn't compute the statistic.";
                 }
 
-                const unit = parameterInfo[paramId].unit || '';
+                const unit = parameterInfo[paramId].unit ||
+                '';
                 return `The ${statKind} ${parameterInfo[paramId].label} for the ${formatWhenText(timeWindow, specificDate)} was ${result.toFixed(2)} ${unit}.`;
-
             } else {
                 return "Sorry, I'm not sure how to answer that. Please ask about statistics (average, max, min) for a specific parameter (like temperature, pH) or ask about how many times a value was above or below a threshold.";
             }
@@ -1246,22 +1259,18 @@
             match = question.match(/(?:in|over|for|last)\s+(?:the\s+)?(\d+)\s+hours?/i);
             if (match) return { amount: parseInt(match[1]), unit: 'hours' };
             if (/\s(an|one)\s+hour/i.test(question)) return { amount: 1, unit: 'hours' };
-
             // Days
             match = question.match(/(?:in|over|for|last)\s+(?:the\s+)?(\d+)\s+days?/i);
             if (match) return { amount: parseInt(match[1]), unit: 'days' };
             if (/\s(a|one)\s+day/i.test(question)) return { amount: 1, unit: 'days' };
-            
             // Weeks
             match = question.match(/(?:in|over|for|last)\s+(?:the\s+)?(\d+)\s+weeks?/i);
             if (match) return { amount: parseInt(match[1]) * 7, unit: 'days' };
             if (/\s(a|one)\s+week/i.test(question)) return { amount: 7, unit: 'days' };
-
             // Months
             match = question.match(/(?:in|over|for|last)\s+(?:the\s+)?(\d+)\s+months?/i);
             if (match) return { amount: parseInt(match[1]) * 30, unit: 'days' };
             if (/\s(a|one)\s+month/i.test(question)) return { amount: 30, unit: 'days' };
-
             return null;
         }
 
