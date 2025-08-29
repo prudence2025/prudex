@@ -22,14 +22,26 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
+            /* Added safe-area padding for all sides */
             padding-top: calc(20px + env(safe-area-inset-top));
             padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            padding-left: calc(20px + env(safe-area-inset-left));
+            padding-right: calc(20px + env(safe-area-inset-right));
         }
         
         .container {
             width: 100%;
             max-width: 480px;
             margin: 0 auto;
+            /* Added transition for smooth blur effect */
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* --- NEW --- This rule blurs the container when the modal is open */
+        body.modal-open .container {
+            filter: blur(8px);
+            transform: scale(0.95);
+            pointer-events: none; /* Prevents clicking on the blurred background */
         }
         
         .profile-card {
@@ -144,7 +156,12 @@
             z-index: 100;
             justify-content: center;
             align-items: center;
+            /* --- MODIFIED --- Added safe-area padding for notch devices */
             padding: 20px;
+            padding-top: calc(20px + env(safe-area-inset-top));
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            padding-left: calc(20px + env(safe-area-inset-left));
+            padding-right: calc(20px + env(safe-area-inset-right));
         }
         
         .modal-content {
@@ -305,7 +322,6 @@
         </div>
     </div>
 
-    <!-- Pumps Modal -->
     <div class="modal" id="pumps-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -341,25 +357,29 @@
             const pumpsBtn = document.getElementById('pumps-btn');
             const pumpsModal = document.getElementById('pumps-modal');
             const closeModal = document.getElementById('close-modal');
-            
+
             // Open pumps modal
             pumpsBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                body.classList.add('blurred');
+                /* --- MODIFIED --- Changed class name for clarity */
+                body.classList.add('modal-open');
                 pumpsModal.style.display = 'flex';
             });
-            
-            // Close pumps modal
-            closeModal.addEventListener('click', function() {
-                body.classList.remove('blurred');
+
+            // Function to close the modal
+            function closeModalAction() {
+                /* --- MODIFIED --- Changed class name for clarity */
+                body.classList.remove('modal-open');
                 pumpsModal.style.display = 'none';
-            });
-            
+            }
+
+            // Close pumps modal with button
+            closeModal.addEventListener('click', closeModalAction);
+
             // Close modal if clicked outside content
             pumpsModal.addEventListener('click', function(e) {
                 if (e.target === pumpsModal) {
-                    body.classList.remove('blurred');
-                    pumpsModal.style.display = 'none';
+                    closeModalAction();
                 }
             });
 
@@ -385,7 +405,6 @@
                 if (allGlowButtons.length > 0) {
                     // Add active class to the current button
                     allGlowButtons[currentGlowIndex].classList.add('active-glow');
-
                     // Move to the next button for the next cycle
                     currentGlowIndex = (currentGlowIndex + 1) % allGlowButtons.length;
                 }
