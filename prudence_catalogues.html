@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prudence Engineering Services</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: url('https://prudenceeng.lk/wp-content/uploads/2025/08/DeWatermark.ai_1756461371964.jpeg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        .profile-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: contain;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 0 auto 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .company-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tagline {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        .links-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .link-btn {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            min-height: 55px;
+        }
+        
+        .link-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .link-btn:hover, .link-btn:hover i {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+        
+        .link-btn i {
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .link-text {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .link-btn.active-glow .glowing-text span,
+        .modal-link.active-glow .glowing-text span {
+            display: inline-block;
+            animation: glow-letter 3.5s infinite;
+        }
+
+        @keyframes glow-letter {
+            0%, 100% {
+                color: #fff;
+                text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+            }
+            50% {
+                color: #fff;
+                text-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 16px rgba(255, 255, 255, 0.7);
+            }
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .close-btn:hover {
+            transform: rotate(90deg);
+            background: rgba(255, 255, 255, 0.1);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+        
+        .modal-links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .modal-link {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            min-height: 55px;
+        }
+        
+        .modal-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-link:hover, .modal-link:hover i {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8rem;
+            opacity: 0.9;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .profile-card {
+                padding: 20px 15px;
+            }
+            
+            .company-name {
+                font-size: 1.3rem;
+            }
+            
+            .link-btn, .modal-link {
+                padding: 12px 15px;
+                font-size: 0.95rem;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="profile-card">
+            <img src="https://prudenceeng.lk/wp-content/uploads/2025/01/Prudence-engineering-Logo-2-1.webp" alt="Prudence Engineering Logo" class="profile-img">
+            <h1 class="company-name">Prudence Engineering Service (Pvt) Ltd</h1>
+            <p class="tagline">Engineering Excellence & Innovative Solutions</p>
+            
+            <div class="links-container">
+                <a href="#" class="link-btn" id="pumps-btn">
+                    <span class="link-text glowing-text"><span>P</span><span>u</span><span>m</span><span>p</span><span>s</span></span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                
+                <a href="#" class="link-btn">
+                    <span class="link-text glowing-text"><span>P</span><span>r</span><span>u</span><span>d</span><span>e</span><span>x</span></span>
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                
+                <a href="#" class="link-btn">
+                    <span class="link-text glowing-text"><span>W</span><span>a</span><span>s</span><span>t</span><span>e</span><span>r</span><span>&nbsp;</span><span>W</span><span>a</span><span>t</span><span>e</span><span>r</span><span>&nbsp;</span><span>P</span><span>u</span><span>r</span><span>i</span><span>f</span><span>i</span><span>c</span><span>a</span><span>t</span><span>i</span><span>o</span><span>n</span></span>
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                
+                <a href="#" class="link-btn">
+                    <span class="link-text glowing-text"><span>D</span><span>r</span><span>i</span><span>n</span><span>k</span><span>i</span><span>n</span><span>g</span><span>&nbsp;</span><span>&</span><span>&nbsp;</span><span>P</span><span>r</span><span>o</span><span>c</span><span>e</span><span>s</span><span>s</span><span>&nbsp;</span><span>w</span><span>a</span><span>t</span><span>e</span><span>r</span><span>&nbsp;</span><span>t</span><span>r</span><span>e</span><span>a</span><span>t</span><span>m</span><span>e</span><span>n</span><span>t</span></span>
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                
+                <a href="#" class="link-btn">
+                    <span class="link-text glowing-text"><span>C</span><span>o</span><span>m</span><span>p</span><span>a</span><span>n</span><span>y</span><span>&nbsp;</span><span>P</span><span>r</span><span>o</span><span>f</span><span>i</span><span>l</span><span>e</span></span>
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 Prudence Engineering Service (Pvt) Ltd</p>
+        </div>
+    </div>
+
+    <!-- Pumps Modal -->
+    <div class="modal" id="pumps-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Pumps</h2>
+                <button class="close-btn" id="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-links">
+                <a href="#" class="modal-link">
+                    <span class="link-text glowing-text"><span>A</span><span>O</span><span>D</span><span>D</span><span>&nbsp;</span><span>P</span><span>u</span><span>m</span><span>p</span><span>s</span><span>&nbsp;</span><span>l</span><span>&nbsp;</span><span>F</span><span>l</span><span>u</span><span>i</span><span>m</span><span>a</span><span>c</span></span>
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                <a href="#" class="modal-link">
+                    <span class="link-text glowing-text"><span>D</span><span>o</span><span>s</span><span>i</span><span>n</span><span>g</span><span>&nbsp;</span><span>P</span><span>u</span><span>m</span><span>p</span><span>s</span><span>&nbsp;</span><span>l</span><span>&nbsp;</span><span>I</span><span>n</span><span>j</span><span>e</span><span>c</span><span>t</span><span>a</span></span>
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                <a href="#" class="modal-link">
+                    <span class="link-text glowing-text"><span>S</span><span>u</span><span>b</span><span>m</span><span>e</span><span>r</span><span>s</span><span>i</span><span>b</span><span>l</span><span>e</span><span>&nbsp;</span><span>P</span><span>u</span><span>m</span><span>p</span><span>s</span><span>&nbsp;</span><span>l</span><span>&nbsp;</span><span>S</span><span>o</span><span>n</span><span>h</span><span>o</span></span>
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                <a href="#" class="modal-link">
+                    <span class="link-text glowing-text"><span>H</span><span>i</span><span>g</span><span>h</span><span>&nbsp;</span><span>P</span><span>r</span><span>e</span><span>s</span><span>s</span><span>u</span><span>r</span><span>e</span><span>&nbsp;</span><span>P</span><span>u</span><span>m</span><span>p</span><span>s</span><span>&nbsp;</span><span>l</span><span>&nbsp;</span><span>C</span><span>N</span><span>P</span></span>
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const body = document.body;
+            const pumpsBtn = document.getElementById('pumps-btn');
+            const pumpsModal = document.getElementById('pumps-modal');
+            const closeModal = document.getElementById('close-modal');
+            
+            // Open pumps modal
+            pumpsBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                body.classList.add('blurred');
+                pumpsModal.style.display = 'flex';
+            });
+            
+            // Close pumps modal
+            closeModal.addEventListener('click', function() {
+                body.classList.remove('blurred');
+                pumpsModal.style.display = 'none';
+            });
+            
+            // Close modal if clicked outside content
+            pumpsModal.addEventListener('click', function(e) {
+                if (e.target === pumpsModal) {
+                    body.classList.remove('blurred');
+                    pumpsModal.style.display = 'none';
+                }
+            });
+
+            // --- Glowing Button Logic ---
+            const allGlowButtons = Array.from(document.querySelectorAll('.link-btn, .modal-link')).filter(btn => btn.querySelector('.glowing-text'));
+            let currentGlowIndex = 0;
+
+            // Apply staggered animation delay to all glowing text letters initially
+            allGlowButtons.forEach(buttonElement => {
+                const textElement = buttonElement.querySelector('.glowing-text');
+                if (textElement) {
+                    const letters = textElement.querySelectorAll('span');
+                    letters.forEach((letter, index) => {
+                        letter.style.animationDelay = `${index * 0.05}s`;
+                    });
+                }
+            });
+
+            function cycleGlow() {
+                // Remove active class from all buttons
+                allGlowButtons.forEach(btn => btn.classList.remove('active-glow'));
+
+                if (allGlowButtons.length > 0) {
+                    // Add active class to the current button
+                    allGlowButtons[currentGlowIndex].classList.add('active-glow');
+
+                    // Move to the next button for the next cycle
+                    currentGlowIndex = (currentGlowIndex + 1) % allGlowButtons.length;
+                }
+            }
+
+            if (allGlowButtons.length > 0) {
+                // Initial call to start the glow on the first button
+                cycleGlow();
+                // Set interval to cycle the glow
+                setInterval(cycleGlow, 3000); // Cycle every 3 seconds
+            }
+        });
+    </script>
+</body>
+</html>
