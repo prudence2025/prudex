@@ -814,7 +814,7 @@
             if (!timestamp) return false;
             const apiTime = new Date(timestamp);
             const currentTime = new Date();
-            return (currentTime - apiTime) / 1000 < 30;
+            return (currentTime - apiTime) / 1000 < 60;
         }
 
         async function fetchData() {
